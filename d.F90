@@ -13,6 +13,7 @@ module params
   integer::ierr
 end module params
 
+! to be able to pass allocatable variables, need to use module...
 module mysubs
 contains
   subroutine myinit(iam,np)
@@ -83,9 +84,19 @@ contains
     use params
     implicit none
     real(8),allocatable,dimension(:,:,:),intent(out)::a_l,anew_l
+    integer::i,j,k
 
     allocate(a_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(anew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+!$omp parallel do
+    do k=0,kmax_l+1
+       do j=0,jmax_l+1
+          do i=0,imax_l+1
+             a_l(i,j,k) = 0.0d0
+             anew_l(i,j,k) = 0.0d0
+          end do
+       end do
+    end do
     return
   end subroutine allocate_arrays
 
@@ -171,6 +182,7 @@ contains
 #ifdef _DEBUG
     ! read global
     if (iam.eq.0) then
+       write(6,*) "imax,jmax,kmax:",imax,jmax,kmax
        allocate(a_g(0:imax+1,0:jmax+1,0:kmax+1))
        open(999,file="data_in",form="unformatted",access="stream")
        do k=0,kmax+1
@@ -197,6 +209,33 @@ contains
 
     return
   end subroutine read_initial_data
+
+  subroutine diffuse(a_l,anew_l,type_j,type_k,ifiletype, &
+       src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+       if_update_plus_i,if_update_minus_i, &
+       if_update_plus_j,if_update_minus_j, &
+       if_update_plus_k,if_update_minus_k)
+    use params
+    implicit none
+    real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_l,anew_l
+    integer,intent(in)::type_j,type_k,ifiletype
+    integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
+    logical,intent(in)::if_update_plus_i,if_update_minus_i
+    logical,intent(in)::if_update_plus_j,if_update_minus_j
+    logical,intent(in)::if_update_plus_k,if_update_minus_k
+    real(8)::alpha
+    real(8)::beta
+
+    alpha= -1.0d0*dt/dx/dx
+    beta = 6*dt/dx/dx+1
+    ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k (fortran order)
+    ! alpa*a^(n+1)(g+1)+alpa*a^(n+1)(g-1)+alpa*a^(n+1)(g+imax+2)+alpa*a^(n+1)(g-(imax+2))+alpa*a^(n+1)(g+(imax+2)*(jmax+2))+alpa*a^(n+1)(g-(imax+2)*(jmax+2))+beta*alpa*a^(n+1)(g)
+    !  = a^(n)(g)
+
+    ! petsc here
+    
+    return
+  end subroutine diffuse
 end module mysubs
 
 program main
@@ -222,7 +261,11 @@ program main
        if_update_plus_j,if_update_minus_j, &
        if_update_plus_k,if_update_minus_k)
   call read_initial_data(a_l,a_g,ifiletype,iam,np)
-  !  call diffuse()
+  call diffuse(a_l,anew_l,type_j,type_k,ifiletype, &
+       src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+       if_update_plus_i,if_update_minus_i, &
+       if_update_plus_j,if_update_minus_j, &
+       if_update_plus_k,if_update_minus_k)
   call myfini(a_l,anew_l,type_j,type_k,ifiletype)
   stop
 end program main
