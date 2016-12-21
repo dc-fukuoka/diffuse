@@ -222,8 +222,8 @@ contains
     alpha= -1.0d0*dt/dx/dx
     beta = 6*dt/dx/dx+1
     ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k (fortran order)
-    ! alpa*a^(n+1)(g+1)+alpa*a^(n+1)(g-1)+alpa*a^(n+1)(g+imax+2)+alpa*a^(n+1)(g-(imax+2))+alpa*a^(n+1)(g+(imax+2)*(jmax+2))+alpa*a^(n+1)(g-(imax+2)*(jmax+2))+beta*alpa*a^(n+1)(g)
-    !  = a^(n)(g)
+    ! alpa*anew(g+1)+alpa*anew(g-1)+alpa*anew(g+imax+2)+alpa*anew(g-(imax+2))+alpa*anew(g+(imax+2)*(jmax+2))+alpa*anew(g-(imax+2)*(jmax+2))+beta*anew(g)
+    !  = a(g)
 
     ! petsc here
     
