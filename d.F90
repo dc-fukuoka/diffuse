@@ -102,16 +102,12 @@ contains
 
   subroutine create_datatypes(type_j,type_k,ifiletype, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_plus_i,if_update_minus_i, &
-       if_update_plus_j,if_update_minus_j, &
-       if_update_plus_k,if_update_minus_k)
+       if_update_i,if_update_j,if_update_k)
     use params
     implicit none
     integer,intent(out)::type_j,type_k,ifiletype
     integer,intent(out)::src_i,dest_i,src_j,dest_j,src_k,dest_k
-    logical,intent(inout)::if_update_plus_i,if_update_minus_i
-    logical,intent(inout)::if_update_plus_j,if_update_minus_j
-    logical,intent(inout)::if_update_plus_k,if_update_minus_k
+    logical,dimension(2),intent(inout)::if_update_i,if_update_j,if_update_k ! 1: + direction, 2: - direction
     integer::comm_cart,iam_cart
     integer::idivs(ndims),coords(ndims)
     logical::prds(ndims)
@@ -151,12 +147,12 @@ contains
     call mpi_cart_shift(comm_cart,2,1,src_k,dest_k,ierr)
 
     ! there is no need to send/recv on the boundaries
-    if (coords(3).eq.0)      if_update_plus_i  = .false.
-    if (coords(3).eq.idiv-1) if_update_minus_i = .false.
-    if (coords(2).eq.0)      if_update_plus_j  = .false.
-    if (coords(2).eq.jdiv-1) if_update_minus_j = .false.
-    if (coords(1).eq.0)      if_update_plus_k  = .false.
-    if (coords(1).eq.kdiv-1) if_update_minus_k = .false.
+    if (coords(3).eq.0)      if_update_i(1) = .false.
+    if (coords(3).eq.idiv-1) if_update_i(2) = .false.
+    if (coords(2).eq.0)      if_update_j(1) = .false.
+    if (coords(2).eq.jdiv-1) if_update_j(2) = .false.
+    if (coords(1).eq.0)      if_update_k(1) = .false.
+    if (coords(1).eq.kdiv-1) if_update_k(2) = .false.
 
     return
   end subroutine create_datatypes
@@ -212,17 +208,14 @@ contains
 
   subroutine diffuse(a_l,anew_l,type_j,type_k,ifiletype, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_plus_i,if_update_minus_i, &
-       if_update_plus_j,if_update_minus_j, &
-       if_update_plus_k,if_update_minus_k)
+       if_update_i,if_update_j,if_update_k)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_l,anew_l
     integer,intent(in)::type_j,type_k,ifiletype
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
-    logical,intent(in)::if_update_plus_i,if_update_minus_i
-    logical,intent(in)::if_update_plus_j,if_update_minus_j
-    logical,intent(in)::if_update_plus_k,if_update_minus_k
+    logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
+
     real(8)::alpha
     real(8)::beta
 
@@ -248,24 +241,18 @@ program main
   real(8),allocatable,dimension(:,:,:)::a_l, anew_l
   integer::type_j,type_k,ifiletype
   integer::src_i,dest_i,src_j,dest_j,src_k,dest_k
-  logical::if_update_plus_i=.true.,if_update_minus_i=.true.
-  logical::if_update_plus_j=.true.,if_update_minus_j=.true.
-  logical::if_update_plus_k=.true.,if_update_minus_k=.true.
+  logical,dimension(2)::if_update_i=.true.,if_update_j=.true.,if_update_k=.true.
 
   call myinit(iam,np)
   call read_inputs(11,iam,np)
   call allocate_arrays(a_l,anew_l)
   call create_datatypes(type_j,type_k,ifiletype, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_plus_i,if_update_minus_i, &
-       if_update_plus_j,if_update_minus_j, &
-       if_update_plus_k,if_update_minus_k)
+       if_update_i,if_update_j,if_update_k)
   call read_initial_data(a_l,a_g,ifiletype,iam,np)
   call diffuse(a_l,anew_l,type_j,type_k,ifiletype, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_plus_i,if_update_minus_i, &
-       if_update_plus_j,if_update_minus_j, &
-       if_update_plus_k,if_update_minus_k)
+       if_update_i,if_update_j,if_update_k)
   call myfini(a_l,anew_l,type_j,type_k,ifiletype)
   stop
 end program main
