@@ -4,4 +4,4 @@ create_input: create_input.F90
 d: d.F90
 	mpiifort -D_DEBUG -g -traceback d.F90 -o d
 clean:
-	rm -f fort.10* create_input d *.mod *~ data_in
+	rm -f fort.20* create_input d *.mod *~ data_in

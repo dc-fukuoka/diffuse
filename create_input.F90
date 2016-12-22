@@ -1,15 +1,18 @@
 program main
   implicit none
-  integer,parameter::imax=16,jmax=16,kmax=16
+  integer::imax,jmax,kmax,iter_max
+  namelist/param1/imax,jmax,kmax,iter_max
   integer::i,j,k
-  real(8)::a(0:imax+1,0:jmax+1,0:kmax+1)
-  real(8)::b(0:imax+1,0:jmax+1,0:kmax+1)
+  real(8),allocatable,dimension(:,:,:)::a,b
   real(8)::diff
   integer::unit=10
   integer::len
 
+
+  read(11,param1)
   open(unit=unit,file="data_in",form="unformatted",access="stream")
-  
+
+  allocate(a(0:imax+1,0:jmax+1,0:kmax+1),b(0:imax+1,0:jmax+1,0:kmax+1))
   do k=0,kmax+1
      do j=0,jmax+1
         do i=0,imax+1
@@ -33,5 +36,6 @@ program main
      end do
   end do
   close(unit)
+  deallocate(a,b)
   stop
 end program main
