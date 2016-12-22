@@ -1,6 +1,6 @@
 program main
   implicit none
-  integer,parameter::imax=4,jmax=4,kmax=4
+  integer,parameter::imax=16,jmax=16,kmax=16
   integer::i,j,k
   real(8)::a(0:imax+1,0:jmax+1,0:kmax+1)
   real(8)::b(0:imax+1,0:jmax+1,0:kmax+1)

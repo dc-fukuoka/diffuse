@@ -6,7 +6,7 @@ module params
   implicit none
   integer,parameter::ndims=3
   character(len=32)::data_in = "data_in"
-  real(8)::dt,dx
+  real(8)::dt,dx,tol
   integer::imax, jmax, kmax ! global
   integer::imax_l, jmax_l, kmax_l
   integer::idiv, jdiv, kdiv ! # of division for each dimensions
@@ -65,7 +65,7 @@ contains
     use params
     implicit none
     integer,intent(in)::unit,iam,np
-    namelist /param0/dt,dx,imax,jmax,kmax,idiv,jdiv,kdiv
+    namelist /param0/dt,dx,tol,imax,jmax,kmax,idiv,jdiv,kdiv
     read(unit, param0)
     if (mod(imax,idiv).ne.0.or.mod(jmax,jdiv).ne.0.or.mod(kmax,kdiv).ne.0) then
        if (iam.eq.0) write(6,*) "imax/idiv, jmax/jdiv, kmax/kdiv must be able to be devided."
@@ -196,7 +196,7 @@ contains
     do k=0,kmax_l+1
        do j=0,kmax_l+1
           do i=0,imax_l+1
-             write(100+iam,"(a,3i2,a,f6.2)") "a_l(",i,j,k,"): ",a_l(i,j,k)
+             write(200+iam,"(a,3i2,a,f6.2)") "a_l(",i,j,k,"): ",a_l(i,j,k)
           end do
        end do
     end do
@@ -215,7 +215,6 @@ contains
     integer,intent(in)::type_j,type_k,ifiletype
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
-
     real(8)::alpha
     real(8)::beta
 
@@ -225,7 +224,8 @@ contains
     ! alpa*anew(g+1)+alpa*anew(g-1)+alpa*anew(g+imax+2)+alpa*anew(g-(imax+2))+alpa*anew(g+(imax+2)*(jmax+2))+alpa*anew(g-(imax+2)*(jmax+2))+beta*anew(g)
     !  = a(g)
 
-    ! petsc here
+    
+    ! CG method
     
     return
   end subroutine diffuse

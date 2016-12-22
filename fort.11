@@ -1,9 +1,10 @@
 &param0
-dt   = 1.0d-6 
-dx   = 1.0d-8
-imax = 4
-jmax = 4
-kmax = 4
+dt   = 1.0d-6
+dx   = 1.0d-2
+tol  = 1.0d-12
+imax = 16
+jmax = 16
+kmax = 16
 idiv = 2
 jdiv = 2
 kdiv = 2
