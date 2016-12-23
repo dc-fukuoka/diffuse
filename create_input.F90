@@ -21,6 +21,7 @@ program main
         end do
      end do
   end do
+#if 0
   rewind(unit)
   do k=0,kmax+1
      do j=0,jmax+1
@@ -35,6 +36,7 @@ program main
         end do
      end do
   end do
+#endif
   close(unit)
   deallocate(a,b)
   stop

@@ -181,7 +181,7 @@ contains
     call mpi_file_read_all(fh,a_l(0,0,0),(imax_l+2)*(jmax_l+2)*(kmax_l+2),mpi_real8,istat,ierr)
     call mpi_file_close(fh,ierr)
 
-#ifdef _DEBUG
+#if 0
     ! read global
     if (iam.eq.0) then
        allocate(a_g(0:imax+1,0:jmax+1,0:kmax+1))
@@ -206,7 +206,7 @@ contains
        end do
     end do
     ! ok
-#endif ! _DEBUG
+#endif
 
     return
   end subroutine read_initial_data
@@ -261,17 +261,16 @@ contains
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,mpi_comm_world,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,mpi_comm_world,ireqs(12),ierr)
     call mpi_waitall(ndims*4,ireqs,istats,ierr)
-    
-    ! need to update halo here
+
     ! i direction
-    a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2)
-    a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4)
+    if (if_update_i(1)) a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2)
+    if (if_update_i(2)) a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4)
     ! j drection
-    a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2)
-    a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4)
+    if (if_update_j(1)) a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2)
+    if (if_update_j(2)) a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4)
     ! k direction
-    a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2)
-    a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4)
+    if (if_update_k(1)) a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2)
+    if (if_update_k(2)) a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4)
     
     deallocate(buf_i,buf_j,buf_k)
     return
@@ -397,12 +396,19 @@ contains
           end do
 
           ! segfault here..
-          ! call exchange_halo(a_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-          !      if_update_i,if_update_j,if_update_k)
-          ! call exchange_halo(x_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-          !      if_update_i,if_update_j,if_update_k)
-          ! call exchange_halo(p_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-          !      if_update_i,if_update_j,if_update_k)
+          call exchange_halo(a_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               if_update_i,if_update_j,if_update_k)
+          call exchange_halo(x_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               if_update_i,if_update_j,if_update_k)
+          call exchange_halo(p_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               if_update_i,if_update_j,if_update_k)
+          
+          ! df: debug
+          do j=1,jmax
+             write(300+iam,"(16f8.2)") a_l(0,j,1:kmax_l)
+          end do
+          write(300+iam,*) "---"
+
        end do ! iter
        
        do k=0,kmax+1
