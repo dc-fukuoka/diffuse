@@ -16,7 +16,44 @@ end module params
 
 ! to be able to pass allocatable variables, need to use module...
 module mysubs
+#ifdef _DEBUG
 contains
+  subroutine debug_output(unit,a,ii,jj,kk,dim,point)
+    use params
+    implicit none
+    integer,intent(in)::ii,jj,kk,dim,point
+    real(8),dimension(0:ii+1,0:jj+1,0:kk+1),intent(in)::a
+    integer,intent(in)::unit
+    integer::i,j,k
+    ! do k=0,kk+1
+    !    do j=0,jj+1
+    !       do i=0,iil+1
+    !          write(unit+iam,"(a,3i2,a,f6.2)") "a_l(",i,j,k,"): ",a(i,j,k)
+    !       end do
+    !    end do
+    ! end do
+    ! dim = 0: i
+    ! dim = 1: j
+    ! dim = 2: k
+    if (dim.eq.0) then
+       write(unit+iam,*) "i direction, i=",point
+       do j=0,jj+1
+          write(unit+iam,"(6f8.2)") a(point,j,:)
+       end do
+    else if (dim.eq.1) then
+       write(unit+iam,*) "j direction, j=",point
+       do i=0,ii+1
+          write(unit+iam,"(6f8.2)") a(i,point,:)
+       end do
+    else if (dim.eq.2.) then
+       write(unit+iam,*) "k direction, k=",point
+       do i=0,ii+1
+          write(unit+iam,"(6f8.2)") a(i,:,point)
+       end do
+    end if
+    return
+  end subroutine debug_output
+#endif
   subroutine myinit()
     use params
     implicit none
@@ -46,15 +83,16 @@ contains
     return
   end subroutine free_data
 
-  subroutine myfini(a_l,anew_l,ifiletype)
+  subroutine myfini(a_l,anew_l,ifiletype_read,ifiletype_write)
     use params
     implicit none
     real(8),allocatable,dimension(:,:,:),intent(inout)::a_l,anew_l
-    integer,intent(inout)::ifiletype
+    integer,intent(inout)::ifiletype_read,ifiletype_write
 
     call free_data(a_l)
     call free_data(anew_l)
-    call free_type(ifiletype)
+    call free_type(ifiletype_read)
+    call free_type(ifiletype_write)
     call mpi_finalize(ierr)
     return 
   end subroutine myfini
@@ -95,11 +133,11 @@ contains
 
     allocate(a_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(anew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
-!$omp parallel do
+    !$omp parallel do
     do k=0,kmax_l+1
        do j=0,jmax_l+1
           do i=0,imax_l+1
-             a_l(i,j,k) = 0.0d0
+             a_l(i,j,k)    = 0.0d0
              anew_l(i,j,k) = 0.0d0
           end do
        end do
@@ -107,12 +145,12 @@ contains
     return
   end subroutine allocate_arrays
 
-  subroutine create_datatypes(ifiletype, &
+  subroutine create_datatypes(ifiletype_read,ifiletype_write, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k)
     use params
     implicit none
-    integer,intent(out)::ifiletype
+    integer,intent(out)::ifiletype_read,ifiletype_write
     integer,intent(out)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     logical,dimension(2),intent(inout)::if_update_i,if_update_j,if_update_k ! 1: + direction, 2: - direction
     integer::comm_cart,iam_cart
@@ -123,88 +161,105 @@ contains
     integer::sizes(ndims),subsizes(ndims),starts(ndims),oder,subdatatype
 
     prds(:) = .false.
-    idivs(1) = idiv
+    idivs(3) = idiv
     idivs(2) = jdiv
-    idivs(3) = kdiv
+    idivs(1) = kdiv
 
     call mpi_cart_create(mpi_comm_world,ndims,idivs,prds,.false.,comm_cart,ierr)
     call mpi_comm_rank(comm_cart,iam_cart,ierr)
     call mpi_cart_coords(comm_cart,iam_cart,ndims,coords,ierr)
 
     ! for read the input data
+    ! includes halo
     sizes(1)    = imax+2
     sizes(2)    = jmax+2
     sizes(3)    = kmax+2
     subsizes(1) = imax_l+2
     subsizes(2) = jmax_l+2
     subsizes(3) = kmax_l+2
-    ! coords(*) by MPI is C order, start from 0, not 1
+    ! coords(*) by MPI_Cart_coords() is C order, (0,0,0)->(0,0,1), ...
     starts(1)   = coords(3)*imax_l
     starts(2)   = coords(2)*jmax_l
     starts(3)   = coords(1)*kmax_l
-    call mpi_type_create_subarray(ndims,sizes,subsizes,starts,mpi_order_fortran,mpi_real8,ifiletype,ierr)
-    call mpi_type_commit(ifiletype,ierr)
+    call mpi_type_create_subarray(ndims,sizes,subsizes,starts,mpi_order_fortran,mpi_real8,ifiletype_read,ierr)
+    call mpi_type_commit(ifiletype_read,ierr)
+
+    ! for write the output data
+    ! excludes halo
+    sizes(1)    = imax
+    sizes(2)    = jmax
+    sizes(3)    = kmax
+    subsizes(1) = imax_l
+    subsizes(2) = jmax_l
+    subsizes(3) = kmax_l
+    starts(1)   = coords(3)*imax_l
+    starts(2)   = coords(2)*jmax_l
+    starts(3)   = coords(1)*kmax_l
+    call mpi_type_create_subarray(ndims,sizes,subsizes,starts,mpi_order_fortran,mpi_real8,ifiletype_write,ierr)
+    call mpi_type_commit(ifiletype_write,ierr)
 
     ! do not define datatypes for halo exchange, use temporary buffers
-    
+
     call mpi_cart_shift(comm_cart,2,1,src_i,dest_i,ierr)
     call mpi_cart_shift(comm_cart,1,1,src_j,dest_j,ierr)
     call mpi_cart_shift(comm_cart,0,1,src_k,dest_k,ierr)
 
-    ! there is no need to send/recv on the boundaries
-    ! this was useful for OpenACC/MIC offload.
-    if (coords(3).eq.0)      if_update_i(1) = .false.
-    if (coords(3).eq.idiv-1) if_update_i(2) = .false.
-    if (coords(2).eq.0)      if_update_j(1) = .false.
-    if (coords(2).eq.jdiv-1) if_update_j(2) = .false.
-    if (coords(1).eq.0)      if_update_k(1) = .false.
-    if (coords(1).eq.kdiv-1) if_update_k(2) = .false.
+    ! there is no need to exchange on the boundaries
+    if (coords(3).eq.0)      if_update_i(1) = .false. ! - boundary on i direction
+    if (coords(3).eq.idiv-1) if_update_i(2) = .false. ! + boundary on i direction
+    if (coords(2).eq.0)      if_update_j(1) = .false. ! - boundary on j direction
+    if (coords(2).eq.jdiv-1) if_update_j(2) = .false. ! + boundary oj j direction
+    if (coords(1).eq.0)      if_update_k(1) = .false. ! - boundary oj k direction
+    if (coords(1).eq.kdiv-1) if_update_k(2) = .false. ! + boundary oj k direction
 
     return
   end subroutine create_datatypes
 
-  subroutine read_initial_data(a_l,a_g,ifiletype,iam,np)
+  subroutine read_initial_data(a_l,a_g,ifiletype_read)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(out)::a_l
     real(8),dimension(:,:,:),allocatable,intent(out)::a_g
-    integer,intent(in)::ifiletype,iam,np
-    integer::fh,info
+    integer,intent(in)::ifiletype_read
+    integer::fh
     integer(kind=mpi_offset_kind)::idisp=0
     integer::istat(mpi_status_size)
     integer::i,j,k
 
-    call mpi_info_create(info,ierr)
-    call mpi_info_set(info,"striping_factor","8",ierr)
-    call mpi_file_open(mpi_comm_world,data_in,mpi_mode_rdonly,info,fh,ierr)
-    call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype,"native",info,ierr)
+    call mpi_file_open(mpi_comm_world,data_in,mpi_mode_rdonly,mpi_info_null,fh,ierr)
+    call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_read,"native",mpi_info_null,ierr)
     call mpi_file_read_all(fh,a_l(0,0,0),(imax_l+2)*(jmax_l+2)*(kmax_l+2),mpi_real8,istat,ierr)
     call mpi_file_close(fh,ierr)
 
-#if 0
+#if 1
     ! read global
     if (iam.eq.0) then
        allocate(a_g(0:imax+1,0:jmax+1,0:kmax+1))
        open(999,file="data_in",form="unformatted",access="stream")
-       do k=0,kmax+1
+       ! do k=0,kmax+1
+       k = kmax/2
           do j=0,jmax+1
              do i=0,imax+1
                 read(999) a_g(i,j,k)
-                write(1000,"(a,3i2,a,f6.2)") "a_g(",i,j,k,"): ",a_g(i,j,k)
+                ! write(1000,"(a,3i2,a,f6.2)") "a_g(",i,j,k,"): ",a_g(i,j,k)
+                write(1000,*) i,j,a_g(i,j,k)
+                if (i.eq.imax+1) write(1000,*)
              end do
           end do
-       end do
+!       end do
        close(999)
        deallocate(a_g)
     end if
     ! read locals
-    do k=0,kmax_l+1
-       do j=0,kmax_l+1
+    !    do k=0,kmax_l+1
+    k = kmax_l/2
+       do j=0,jmax_l+1
           do i=0,imax_l+1
-             write(200+iam,"(a,3i2,a,f6.2)") "a_l(",i,j,k,"): ",a_l(i,j,k)
+             write(200+iam,*) i,j,a_l(i,j,k)
+             if (i.eq.imax_l+1) write(200+iam,*)
           end do
        end do
-    end do
+!    end do
     ! ok
 #endif
 
@@ -217,13 +272,14 @@ contains
        if_update_i,if_update_j,if_update_k)
     use params
     implicit none
-    real(8),dimension(0:imax+1,0:jmax+1,0:kmax+1),intent(inout)::a_in
+    real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_in
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
     real(8),dimension(:,:,:),allocatable::buf_i,buf_j,buf_k
     integer::ireqs(ndims*4),istats(mpi_status_size,ndims*4)
 #ifdef _DEBUG
-    real(8):: debugval = -1.0d0
+    real(8)::debugval = 0.0d0
+    integer::i,j,k
 #endif
 
     ! temporary buffer for halo exchange
@@ -263,43 +319,56 @@ contains
     call mpi_waitall(ndims*4,ireqs,istats,ierr)
 
     ! i direction
-    if (if_update_i(1)) a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2)
-    if (if_update_i(2)) a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4)
+    if (if_update_i(2)) a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2) ! receive from - boundary on i direction
+    if (if_update_i(1)) a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4) ! receive from + boundary on i direction
     ! j drection
-    if (if_update_j(1)) a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2)
-    if (if_update_j(2)) a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4)
+    if (if_update_j(2)) a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2) ! receive from - boundary on j direction
+    if (if_update_j(1)) a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4) ! receive from + boundary on j direction
     ! k direction
-    if (if_update_k(1)) a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2)
-    if (if_update_k(2)) a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4)
-    
+    if (if_update_k(2)) a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2) ! receive from - boundary on k direction
+    if (if_update_k(1)) a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4) ! receive from + boundary on k direction
+
     deallocate(buf_i,buf_j,buf_k)
     return
   end subroutine exchange_halo
 
-  subroutine diffuse(a_l,anew_l,ifiletype, &
+  subroutine diffuse(a_l,anew_l,ifiletype_read, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_l,anew_l
     real(8),dimension(:,:,:),allocatable::r_l,rnew_l,p_l,pnew_l,x_l,xnew_l
-    integer,intent(in)::ifiletype
+    integer,intent(in)::ifiletype_read
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
     real(8)::coef1,coef2,alpha,beta
-    real(8)::r2,pap,norm2,r2_l,pap_l,norm2_l
+    real(8)::r2,pap,rnew2,r2_l,pap_l,rnew2_l
     integer::i,j,k,tstep,iter
 
     coef1 = -1.0d0*dt/dx/dx
-    coef2 = 6.0d0*dt/dx/dx+1
+    coef2 =  1.0d0+6.0d0*dt/dx/dx
 
-    allocate(r_l(0:imax+1,0:jmax+1,0:kmax+1),rnew_l(0:imax+1,0:jmax+1,0:kmax+1))
-    allocate(p_l(0:imax+1,0:jmax+1,0:kmax+1),pnew_l(0:imax+1,0:jmax+1,0:kmax+1))
-    allocate(x_l(0:imax+1,0:jmax+1,0:kmax+1),xnew_l(0:imax+1,0:jmax+1,0:kmax+1))
+    allocate(r_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),rnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+    allocate(p_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),pnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+    allocate(x_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),xnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+
+    do k=0,kmax_l+1
+       do j=0,jmax_l+1
+          do i=0,imax_l+1
+             r_l(i,j,k)    = 0.0d0
+             rnew_l(i,j,k) = 0.0d0
+             p_l(i,j,k)    = 0.0d0
+             pnew_l(i,j,k) = 0.0d0
+             x_l(i,j,k)    = 0.0d0
+             xnew_l(i,j,k) = 0.0d0
+          end do
+       end do
+    end do
 
     ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k (fortran order)
     ! coef1*(anew(g+1)+anew(g-1)+anew(g+imax+2)+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2anew(g) = a(g)
-    
+
     ! CG method
 
     do k=0,kmax_l+1
@@ -310,10 +379,13 @@ contains
        end do
     end do
 
-    do k=0,kmax_l+1
-       do j=0,jmax_l+1
-          do i=0,imax_l+1
-             r_l(i,j,k) = a_l(i,j,k) - (coef1*(x_l(i+1,j,k)+x_l(i-1,j,k)+x_l(i,j+1,k)+x_l(i,j-1,k)+x_l(i,j,k+1)+x_l(i,j,k-1))+coef2*x_l(i,j,k))
+    do k=1,kmax_l
+       do j=1,jmax_l
+          do i=1,imax_l
+             r_l(i,j,k) = a_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
+                                            +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
+                                            +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
+                                      +coef2*x_l(i,j,k))
              p_l(i,j,k) = r_l(i,j,k)
           end do
        end do
@@ -321,73 +393,93 @@ contains
 
     do tstep=1,1 ! time step, test
        do iter=1,iter_max ! CG method iteration
-          norm2   = 0.0d0
+          rnew2   = 0.0d0
           r2      = 0.0d0
           pap     = 0.0d0
-          norm2_l = 0.0d0
           r2_l    = 0.0d0
+          rnew2_l = 0.0d0
           pap_l   = 0.0d0
-          do k=0,kmax_l+1
-             do j=0,jmax_l+1
-                do i=0,imax_l+1
-                   r2_l = r2_l + r_l(i,j,k)*r_l(i,j,k)
-                   pap_l = pap_l + p_l(i,j,k)*(coef1*(p_l(i+1,j,k)+p_l(i-1,j,k)+p_l(i,j+1,k)+p_l(i,j,k+1)+p_l(i,j,k-1))+coef2*p_l(i,j,k))
+          do k=1,kmax_l
+             do j=1,jmax_l
+                do i=1,imax_l
+                   r2_l  = r2_l+r_l(i,j,k)*r_l(i,j,k)
+                   pap_l = pap_l+p_l(i,j,k)*(coef1*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
+                                                   +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
+                                                   +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
+                                             +coef2*p_l(i,j,k))
                 end do
              end do
           end do
-          
+
           call mpi_allreduce(r2_l, r2, 1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
           call mpi_allreduce(pap_l,pap,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-          
+#if 0
+          if (iam.eq.0) then
+             if (iter.eq.1) then
+                write(6,*) "coef1,coef2:",coef1,coef2
+                write(6,*) "r2_l,r2:",r2_l,r2
+                write(6,*) "pap_l,pap;",pap_l,pap
+             end if
+          end if
+#endif
           alpha = r2/pap
-          do k=0,kmax_l+1
-             do j=0,jmax_l+1
-                do i=0,imax_l+1
+          do k=1,kmax_l
+             do j=1,jmax_l
+                do i=1,imax_l
                    xnew_l(i,j,k) = x_l(i,j,k)+alpha*p_l(i,j,k)
-                   rnew_l(i,j,k) = r_l(i,j,k)-alpha*(coef1*(p_l(i+1,j,k)+p_l(i-1,j,k)+x_l(i,j+1,k)+p_l(i,j,k+1)+p_l(i,j,k-1))+coef2*p_l(i,j,k))
-                   norm2_l       = norm2_l + rnew_l(i,j,k)*rnew_l(i,j,k)
+                   rnew_l(i,j,k) = r_l(i,j,k)-alpha*(coef1*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
+                                                           +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
+                                                           +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
+                                                     +coef2*p_l(i,j,k))
+                   rnew2_l       = rnew2_l+rnew_l(i,j,k)*rnew_l(i,j,k)
                 end do
              end do
           end do
-          
-          call mpi_allreduce(norm2_l,norm2,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-          
+
+          call mpi_allreduce(rnew2_l,rnew2,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
+
 #ifdef _DEBUG
           if (iam.eq.0) then
-             if (mod(iter,imax_l*jmax_l).eq.0) write(6,"(a,i5,2(1pe14.5))") "iter,residual,tol:",iter,sqrt(norm2),tol
+             if (mod(iter,imax_l*jmax_l).eq.0) then
+                write(6,*) "rnew2_l,rnew2:",rnew2_l,rnew2
+                write(6,"(a,i5,2(1pe14.5))") "iter,residual,tol:",iter,sqrt(rnew2),tol
+             end if
           end if
 #endif
-          if (sqrt(norm2).le.tol) then
-             write(6,"(a,i5,2(1pe14.5))") "iter,residual,tol:",iter,sqrt(norm2),tol
-             do k=0,kmax_l+1
-                do j=0,jmax_l+1
-                   do i=0,imax_l+1
+          if (sqrt(rnew2).le.tol) then
+             if (iam.eq.0) then
+                write(6,*) "the result converged."
+                write(6,"(a,i5,2(1pe14.5))") "iter,residual,tol:",iter,sqrt(rnew2),tol
+             end if
+             do k=1,kmax_l
+                do j=1,jmax_l
+                   do i=1,imax_l
                       anew_l(i,j,k) = xnew_l(i,j,k)
                    end do
                 end do
              end do
              exit
-          else if (iter.eq.iter_max.and.sqrt(norm2).le.tol) then
+          else if (iter.eq.iter_max.and.sqrt(rnew2).ge.tol) then
              if (iam.eq.0) then
-                write(6,"(a,2(1pe14.5))") "the result was not converged, residual, tolerance:",sqrt(norm2),tol
-                call mpi_finalize(ierr)
-                stop
+                write(6,"(a,2(1pe14.5))") "the result was not converged, residual, tolerance:",sqrt(rnew2),tol
              end if
+             call mpi_abort(mpi_comm_world,9,ierr)
+             stop
           end if
-          
-          beta = norm2/r2
-          
-          do k=0,kmax+1
-             do j=0,jmax+1
-                do i=0,imax+1
+
+          beta = rnew2/r2
+
+          do k=1,kmax_l
+             do j=1,jmax_l
+                do i=1,imax_l
                    pnew_l(i,j,k) = rnew_l(i,j,k)+beta*p_l(i,j,k)
                 end do
              end do
           end do
-          
-          do k=0,kmax+1
-             do j=0,jmax+1
-                do i=0,imax+1
+
+          do k=1,kmax_l
+             do j=1,jmax_l
+                do i=1,imax_l
                    x_l(i,j,k) = xnew_l(i,j,k)
                    r_l(i,j,k) = rnew_l(i,j,k)
                    p_l(i,j,k) = pnew_l(i,j,k)
@@ -395,35 +487,54 @@ contains
              end do
           end do
 
-          ! segfault here..
           call exchange_halo(a_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k)
           call exchange_halo(x_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k)
           call exchange_halo(p_l,src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k)
-          
-          ! df: debug
-          do j=1,jmax
-             write(300+iam,"(16f8.2)") a_l(0,j,1:kmax_l)
-          end do
-          write(300+iam,*) "---"
 
        end do ! iter
-       
-       do k=0,kmax+1
-          do j=0,jmax+1
-             do i=0,imax+1
+
+       do k=1,kmax_l
+          do j=1,jmax_l
+             do i=1,imax_l
                 a_l(i,j,k) = anew_l(i,j,k)
              end do
           end do
        end do
-       
+
     end do ! tstep
 
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
     return
   end subroutine diffuse
+
+  subroutine write_output(a_l,ifiletype_write)
+    use params
+    implicit none
+    real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(in)::a_l
+    real(8),dimension(imax_l,jmax_l,kmax_l)::tmp
+    integer,intent(in)::ifiletype_write
+
+    character(8)::data_out="data_out"
+    integer::fh,info
+    integer(kind=mpi_offset_kind)::idisp=0
+    integer::istat(mpi_status_size)
+    integer::i,j,k
+
+    tmp(1:imax_l,1:jmax_l,1:kmax_l) = a_l(1:imax_l,1:jmax_l,1:kmax_l)
+    
+    ! C-like writing, exclude datasize information
+    !    call mpi_info_set(info,"striping_factor","8",ierr)
+    ! test
+    info = mpi_info_null
+    call mpi_file_open(mpi_comm_world,data_out,mpi_mode_wronly+mpi_mode_create,info,fh,ierr)
+    call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_write,"native",info,ierr)
+    call mpi_file_write_all(fh,tmp(1,1,1),imax_l*jmax_l*kmax_l,mpi_real8,istat,ierr)
+    call mpi_file_close(fh,ierr)
+!    call mpi_info_free(info,ierr)
+  end subroutine write_output
 end module mysubs
 
 program main
@@ -433,20 +544,21 @@ program main
   implicit none
   real(8),allocatable,dimension(:,:,:)::a_g ! debug
   real(8),allocatable,dimension(:,:,:)::a_l, anew_l
-  integer::ifiletype
+  integer::ifiletype_read, ifiletype_write
   integer::src_i,dest_i,src_j,dest_j,src_k,dest_k
   logical,dimension(2)::if_update_i=.true.,if_update_j=.true.,if_update_k=.true.
 
   call myinit()
   call read_inputs(11)
   call allocate_arrays(a_l,anew_l)
-  call create_datatypes(ifiletype, &
+  call create_datatypes(ifiletype_read,ifiletype_write, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k)
-  call read_initial_data(a_l,a_g,ifiletype,iam,np)
-  call diffuse(a_l,anew_l,ifiletype, &
+  call read_initial_data(a_l,a_g,ifiletype_read)
+  call diffuse(a_l,anew_l,ifiletype_read, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k)
-  call myfini(a_l,anew_l,ifiletype)
+  call write_output(a_l,ifiletype_write)
+  call myfini(a_l,anew_l,ifiletype_read,ifiletype_write)
   stop
 end program main

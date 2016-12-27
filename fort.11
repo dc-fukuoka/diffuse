@@ -1,12 +1,12 @@
 &param0
 dt  = 1.0d-6
 dx  = 1.0d-2
-tol = 1.0d-12
+tol = 1.0d-18
 /
 &param1
-imax = 16
-jmax = 16
-kmax = 16
+imax = 64
+jmax = 64
+kmax = 64
 iter_max = 4096 ! imax*jmax*kmax
 /
 &param2
