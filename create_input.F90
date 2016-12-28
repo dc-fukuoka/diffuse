@@ -16,7 +16,6 @@ program main
 
   allocate(a(0:imax+1,0:jmax+1,0:kmax+1),b(0:imax+1,0:jmax+1,0:kmax+1))
   write(6,*) "imax,jmax,kmax:",jmax,jmax,kmax
-  write(6,*) "iter"
   do k=0,kmax+1
      do j=0,jmax+1
         do i=0,imax+1
