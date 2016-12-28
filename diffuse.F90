@@ -535,7 +535,6 @@ module mysubs
     integer::i,j,k
 
     idisp = ntimes*sizeof(a_l(1,1,1))*imax*jmax*kmax
-    if (iam.eq.0) write(6,*) "idisp:",idisp
     
     tmp(1:imax_l,1:jmax_l,1:kmax_l) = a_l(1:imax_l,1:jmax_l,1:kmax_l)
     
