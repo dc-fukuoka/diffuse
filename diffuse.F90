@@ -102,7 +102,6 @@ module mysubs
 
     allocate(a_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(anew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
-    !$omp parallel do
     do k=0,kmax_l+1
        do j=0,jmax_l+1
           do i=0,imax_l+1
