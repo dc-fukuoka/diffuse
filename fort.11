@@ -1,18 +1,22 @@
 &param0
 dt  = 1.0d-6
 dx  = 1.0d-2
-tol = 1.0d-24
-diff_coef = 3.0d0
+tol = 1.0d-40
+diff_coef = 1.0d2
 /
 &param1
 imax = 64
 jmax = 64
 kmax = 64
-iter_max = 262144 ! imax*jmax*kmax
-tstep_max = 1000
 /
 &param2
-idiv = 8
-jdiv = 4
-kdiv = 2
+idiv = 4
+jdiv = 2
+kdiv = 16
+/
+
+&param3
+iter_max = 262144 ! imax*jmax*kmax
+tstep_max = 100
+freq_write = 10 ! frequency of writing the reusult, write each tstep_max/freq_write time
 /

@@ -1,10 +1,10 @@
-all: create_input create_output d
+all: create_input create_output diffuse
 create_input: create_input.F90
-	ifort -g -traceback create_input.F90 -o create_input
+	ifort -g -O3 -mavx create_input.F90 -o create_input
 create_output: create_output.F90
-	ifort -g -traceback create_output.F90 -o create_output
-d: d.F90
-	mpif90 -fpe0 -D_DEBUG -g -traceback d.F90 -o d
+	ifort -g -O3 -mavx create_output.F90 -o create_output
+diffuse: diffuse.F90
+	mpif90 -g -O3 -mavx diffuse.F90 -o diffuse
 clean:
-	rm -f f create_input create_output d *.mod *~ core.* data_in data_out
+	rm -f f create_input create_output diffuse *.mod *~ core.* data_in data_out
 	find . -type f -name "fort.*"|grep -v fort.11|xargs rm	
