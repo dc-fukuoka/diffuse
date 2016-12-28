@@ -55,7 +55,6 @@ program main
         do j=0,jmax+1
            do i=0,imax+1
               x(i,j,k) = a(i,j,k) ! initial guess
-              b2       = b2 + a(i,j,k)*a(i,j,k)
            end do
         end do
      end do
@@ -81,6 +80,7 @@ program main
            do i=1,imax
               r(i,j,k) = a(i,j,k)-ax(i,j,k)
               p(i,j,k) = r(i,j,k)
+              b2       = b2 + a(i,j,k)*a(i,j,k)
            end do
         end do
      end do
