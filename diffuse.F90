@@ -240,7 +240,7 @@ module mysubs
     return
   end subroutine read_initial_data
 
-  !!!! incomplete
+  ! OK
   subroutine exchange_halo(a_in, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k,comm_cart)
