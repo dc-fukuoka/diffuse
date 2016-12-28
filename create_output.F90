@@ -1,7 +1,7 @@
 program main
   implicit none
-  integer::imax,jmax,kmax,iter_max
-  namelist/param1/imax,jmax,kmax,iter_max
+  integer::imax,jmax,kmax,iter_max,tstep_max
+  namelist/param1/imax,jmax,kmax,iter_max,tstep_max
   integer::i,j,k
   real(8),allocatable,dimension(:,:,:)::a
   real(8)::diff

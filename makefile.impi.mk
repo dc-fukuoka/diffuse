@@ -1,7 +1,10 @@
-all: create_input d.impi
+all: create_input create_output d
 create_input: create_input.F90
 	ifort -g -traceback create_input.F90 -o create_input
-d.impi: d.F90
-	mpiifort -D_DEBUG -g -traceback d.F90 -o d.impi
+create_output: create_output.F90
+	ifort -g -traceback create_output.F90 -o create_output
+d: d.F90
+	mpiifort -fpe0 -D_DEBUG -g -traceback d.F90 -o d
 clean:
-	rm -f fort.20* fort.30* fort.1000 create_input d.impi *.mod *~ core.* data_in
+	rm -f f create_input create_output d *.mod *~ core.* data_in data_out
+	find . -type f -name "fort.*"|grep -v fort.11|xargs rm	

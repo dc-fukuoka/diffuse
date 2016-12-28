@@ -1,7 +1,7 @@
 program main
   implicit none
-  integer::imax,jmax,kmax,iter_max
-  namelist/param1/imax,jmax,kmax,iter_max
+  integer::imax,jmax,kmax,iter_max,tstep_max
+  namelist/param1/imax,jmax,kmax,iter_max,tstep_max
   integer::i,j,k
   real(8),allocatable,dimension(:,:,:)::a,b
   real(8)::diff
@@ -18,7 +18,7 @@ program main
   do k=0,kmax+1
      do j=0,jmax+1
         do i=0,imax+1
-           ! a(i,j,k) = i*100+j*10+k
+           !  a(i,j,k) = i*10000+j*10+k
            !  a(i,j,k) = sin(dble(i))+cos(dble(j))+sin(dble(k))
            a(i,j,k) = exp(-1.0d0*((i-imax/2)**2+(j-jmax/2)**2+(k-kmax/2)**2)/2/sigma/sigma)/sqrt(2*3.14159d0*sigma) ! exp(-r^2)
            write(unit) a(i,j,k)
@@ -44,8 +44,8 @@ program main
   k=kmax/2
   do j=1,jmax
      do i=1,imax
-        write(600,*) i,j,a(i,j,k)
-        if (i.eq.imax+1) write(600,*)
+        write(100,*) i,j,a(i,j,k)
+        if (i.eq.imax+1) write(100,*)
      end do
   end do
   close(unit)
