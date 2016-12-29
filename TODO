@@ -1,0 +1,2 @@
+1. expand exchange_halo() into diffuse() and implement communication/computation overlap (to do this, temporary buffer for communicatoin was needed)
+2. create hybrid version and implement OpenMP communication/computation overlap
