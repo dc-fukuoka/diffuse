@@ -29,6 +29,7 @@ program main
   !  write(6,*) "coef1,coef2:",coef1,coef2
 
   ! initial
+  !$omp parallel do
   do k=0,kmax+1
      do j=0,jmax+1
         do i=0,imax+1
@@ -49,8 +50,9 @@ program main
   t0 = dclock()
   do tstep=1,max_tstep
      if (mod(tstep,max_tstep/10).eq.0) write(6,*) "tstep:",tstep
-
      b2 = 0.0d0
+     !$omp parallel private(i,j,k)
+     !$omp do
      do k=0,kmax+1
         do j=0,jmax+1
            do i=0,imax+1
@@ -58,6 +60,7 @@ program main
            end do
         end do
      end do
+     !$omp end do
 
      ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k
      !             i+1       i-1       j+1              j-1              k+1                       k-1
@@ -65,6 +68,7 @@ program main
      !
 
      ! boundary value of ax is zero, how to handle it?
+     !$omp do
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
@@ -75,6 +79,8 @@ program main
            end do
         end do
      end do
+     !$omp end do
+     !$omp do reduction(+:b2)
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
@@ -84,7 +90,8 @@ program main
            end do
         end do
      end do
-
+     !$omp end do
+     !$omp end parallel
      ! exclude t loop
      do iter=1,max_iter
         rnew2 = 0.0d0
@@ -96,6 +103,8 @@ program main
         !     ap    = 0.0d0
         !     xnew  = 0.0d0
         !     rnew  = 0.0d0
+        !$omp parallel private(i,j,k)
+        !$omp do
         do k=1,kmax
            do j=1,jmax
               do i=1,imax
@@ -106,6 +115,8 @@ program main
               end do
            end do
         end do
+        !$omp end do
+        !$omp do reduction(+:r2,pap)
         do k=1,kmax
            do j=1,jmax
               do i=1,imax
@@ -115,7 +126,10 @@ program main
            end do
         end do
         !     write(6,*) "iter,r2,pap:",iter,r2,pap
+        !$omp single
         alpha = r2/pap
+        !$omp end single
+        !$omp do reduction(+:rnew2)
         do k=1,kmax
            do j=1,jmax
               do i=1,imax
@@ -125,9 +139,12 @@ program main
               end do
            end do
         end do
+        !$omp end do
+        !$omp end parallel
         eps = sqrt(rnew2)/sqrt(b2)
         if (eps.le.tol) then
            !        write(6,*) "iter,residual,tol:",iter,eps,tol
+           !$omp parallel do
            do k=1,kmax
               do j=1,jmax
                  do i=1,imax
@@ -138,7 +155,7 @@ program main
            exit
         else if (iter.eq.max_iter.and.eps.ge.tol) then
            write(6,*) "did not converge. residual,tol:",eps,tol
-           !        stop
+           stop
         end if
         beta = rnew2/r2
         if (isnan(alpha).or.isnan(beta)) then
@@ -149,6 +166,8 @@ program main
         ! if (mod(iter,max_iter/(imax+2)/(jmax+2)).eq.0) then
         !    write(6,*) "iter,eps:",iter,eps
         ! end if
+        !$omp parallel private(i,j,k)
+        !$omp do
         do k=0,kmax+1
            do j=0,jmax+1
               do i=0,imax+1
@@ -156,6 +175,8 @@ program main
               end do
            end do
         end do
+        !$omp end do
+        !$omp do
         do k=1,kmax
            do j=1,jmax
               do i=1,imax
@@ -165,8 +186,11 @@ program main
               end do
            end do
         end do
+        !$omp end do
+        !$omp end parallel
      end do ! iter
 
+     !$omp parallel do
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
