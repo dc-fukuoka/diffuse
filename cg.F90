@@ -168,9 +168,9 @@ program main
         ! end if
         !$omp parallel private(i,j,k)
         !$omp do
-        do k=0,kmax+1
-           do j=0,jmax+1
-              do i=0,imax+1
+        do k=1,kmax
+           do j=1,jmax
+              do i=1,imax
                  pnew(i,j,k) = rnew(i,j,k)+beta*p(i,j,k)
               end do
            end do
