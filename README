@@ -35,5 +35,3 @@ $ ./create_input
 $ mpirun -np $NP ./diffuse
 $ ./create_output
 $ ./create_anime.sh
-
-TODO:
