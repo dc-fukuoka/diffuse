@@ -506,9 +506,9 @@ module mysubs
              end do
           end do
 
-          call exchange_halo(x_l,buf_x_l_i,buf_x_l_j,buf_x_l_k, &
-               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-               if_update_i,if_update_j,if_update_k,comm_cart)
+!          call exchange_halo(x_l,buf_x_l_i,buf_x_l_j,buf_x_l_k, &
+!               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+!               if_update_i,if_update_j,if_update_k,comm_cart)
           call exchange_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k,comm_cart)
