@@ -188,11 +188,10 @@ module mysubs
     return
   end subroutine create_datatypes
 
-  subroutine read_initial_data(a_l,a_g,ifiletype_read)
+  subroutine read_initial_data(a_l,ifiletype_read)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(out)::a_l
-    real(8),dimension(:,:,:),allocatable,intent(out)::a_g
     integer,intent(in)::ifiletype_read
     integer::fh
     integer(kind=mpi_offset_kind)::idisp=0
@@ -203,38 +202,6 @@ module mysubs
     call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_read,"native",mpi_info_null,ierr)
     call mpi_file_read_all(fh,a_l(0,0,0),(imax_l+2)*(jmax_l+2)*(kmax_l+2),mpi_real8,istat,ierr)
     call mpi_file_close(fh,ierr)
-
-#if 0
-    ! read global
-    if (iam.eq.0) then
-       allocate(a_g(0:imax+1,0:jmax+1,0:kmax+1))
-       open(999,file="data_in",form="unformatted",access="stream")
-       ! do k=0,kmax+1
-       k = kmax/2
-          do j=0,jmax+1
-             do i=0,imax+1
-                read(999) a_g(i,j,k)
-                ! write(1000,"(a,3i2,a,f6.2)") "a_g(",i,j,k,"): ",a_g(i,j,k)
-                write(1000,*) i,j,a_g(i,j,k)
-                if (i.eq.imax+1) write(1000,*)
-             end do
-          end do
-!       end do
-       close(999)
-       deallocate(a_g)
-    end if
-    ! read locals
-    !    do k=0,kmax_l+1
-    k = kmax_l/2
-       do j=0,jmax_l+1
-          do i=0,imax_l+1
-             write(200+iam,*) i,j,a_l(i,j,k)
-             if (i.eq.imax_l+1) write(200+iam,*)
-          end do
-       end do
-!    end do
-    ! ok
-#endif
 
     return
   end subroutine read_initial_data
@@ -566,7 +533,6 @@ program main
   use params
   use mysubs
   implicit none
-  real(8),allocatable,dimension(:,:,:)::a_g ! debug
   real(8),allocatable,dimension(:,:,:)::a_l, anew_l
   integer::ifiletype_read, ifiletype_write
   integer::src_i,dest_i,src_j,dest_j,src_k,dest_k
@@ -580,7 +546,7 @@ program main
   call create_datatypes(ifiletype_read,ifiletype_write, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k,comm_cart)
-  call read_initial_data(a_l,a_g,ifiletype_read)
+  call read_initial_data(a_l,ifiletype_read)
   call mpi_barrier(mpi_comm_world,ierr)
   t0 = mpi_wtime()
   call diffuse(a_l,anew_l,ifiletype_read, &
