@@ -320,7 +320,6 @@ module mysubs
     integer,intent(in)::comm_cart
     integer,intent(in)::ifiletype_write
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
-    real(8),dimension(:,:,:),allocatable::buf_x_l_i,buf_x_l_j,buf_x_l_k
     real(8),dimension(:,:,:),allocatable::buf_p_l_i,buf_p_l_j,buf_p_l_k
     real(8),dimension(:,:,:),allocatable::buf_a_l_i,buf_a_l_j,buf_a_l_k
     real(8)::coef1,coef2,alpha,beta,eps
@@ -330,10 +329,6 @@ module mysubs
 
 
     ! temporary buffer for halo exchange
-    ! for x_l
-    allocate(buf_x_l_i(jmax_l,kmax_l,4)) ! j-k plane
-    allocate(buf_x_l_j(imax_l,kmax_l,4)) ! i-k plane
-    allocate(buf_x_l_k(imax_l,jmax_l,4)) ! i-j plane
     ! for p_l
     allocate(buf_p_l_i(jmax_l,kmax_l,4)) ! j-k plane
     allocate(buf_p_l_j(imax_l,kmax_l,4)) ! i-k plane
@@ -506,9 +501,6 @@ module mysubs
              end do
           end do
 
-!          call exchange_halo(x_l,buf_x_l_i,buf_x_l_j,buf_x_l_k, &
-!               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-!               if_update_i,if_update_j,if_update_k,comm_cart)
           call exchange_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k,comm_cart)
@@ -536,7 +528,6 @@ module mysubs
     end do ! tstep
     
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
-    deallocate(buf_x_l_i,buf_x_l_j,buf_x_l_k)
     deallocate(buf_p_l_i,buf_p_l_j,buf_p_l_k)
     deallocate(buf_a_l_i,buf_a_l_j,buf_a_l_k)
 
