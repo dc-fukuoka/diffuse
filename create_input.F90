@@ -16,16 +16,17 @@ program main
 
   allocate(a(0:imax+1,0:jmax+1,0:kmax+1),b(0:imax+1,0:jmax+1,0:kmax+1))
   write(6,*) "imax,jmax,kmax:",jmax,jmax,kmax
+!$omp parallel do private(i,j,k)
   do k=0,kmax+1
      do j=0,jmax+1
         do i=0,imax+1
            !  a(i,j,k) = i*10000+j*10+k
            !  a(i,j,k) = sin(dble(i))+cos(dble(j))+sin(dble(k))
            a(i,j,k) = exp(-1.0d0*((i-imax/2)**2+(j-jmax/2)**2+(k-kmax/2)**2)/2/sigma/sigma)/sqrt(2*3.14159d0*sigma) ! exp(-r^2)
-           write(unit) a(i,j,k)
         end do
      end do
   end do
+  write(unit) a
 #if 0
   rewind(unit)
   do k=0,kmax+1
