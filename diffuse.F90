@@ -555,7 +555,7 @@ program main
   call mpi_barrier(mpi_comm_world,ierr)
   time = mpi_wtime() - t0
   if (iam.eq.0) write(6,*) "time[s]:",time
-!  call write_output(a_l,ifiletype_write,0)
+  call write_output(a_l,ifiletype_write,0)
   call myfini(a_l,anew_l,ifiletype_read,ifiletype_write,comm_cart)
   stop
 end program main
