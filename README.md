@@ -28,7 +28,8 @@ input file: fort.11
     freq_write = 10   ! frequency of writing the reusult, write each tstep_max/freq_write time
     /
 
-how to run:  
+how to run:
+    
     $ make  
     $ vi fort.11  
     $ ./create_input  
