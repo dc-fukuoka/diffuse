@@ -36,5 +36,11 @@ how to run:
     $ mpirun -np $NP ./diffuse  
     $ ./create_output  
     $ ./create_anime.sh  
-  
+
+cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz  
+problem size: 64x64x64  
+maximum timestep: 100  
+with 1   core: 38.3777060508728 s  
+with 32 cores:  2.2367570400238 s  
+
 ![Alt text](./diffuse.gif?raw=true "diffuse.gif")
