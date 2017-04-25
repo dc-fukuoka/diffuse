@@ -287,8 +287,7 @@ module mysubs
     integer,intent(in)::comm_cart
     integer,intent(in)::ifiletype_write
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
-    real(8),dimension(:,:,:),allocatable::buf_p_l_i,buf_p_l_j,buf_p_l_k
-    real(8),dimension(:,:,:),allocatable::buf_a_l_i,buf_a_l_j,buf_a_l_k
+    real(8),dimension(:,:,:),allocatable::buf_i,buf_j,buf_k
     real(8)::coef1,coef2,alpha,beta,eps
     real(8)::r2,pap,rnew2,r2_l,pap_l,rnew2_l,b2,b2_l
     integer::i,j,k,tstep,iter
@@ -296,14 +295,9 @@ module mysubs
 
 
     ! temporary buffer for halo exchange
-    ! for p_l
-    allocate(buf_p_l_i(jmax_l,kmax_l,4)) ! j-k plane
-    allocate(buf_p_l_j(imax_l,kmax_l,4)) ! i-k plane
-    allocate(buf_p_l_k(imax_l,jmax_l,4)) ! i-j plane
-    ! for a_l
-    allocate(buf_a_l_i(jmax_l,kmax_l,4)) ! j-k plane
-    allocate(buf_a_l_j(imax_l,kmax_l,4)) ! i-k plane
-    allocate(buf_a_l_k(imax_l,jmax_l,4)) ! i-j plane
+    allocate(buf_i(jmax_l,kmax_l,4)) ! j-k plane
+    allocate(buf_j(imax_l,kmax_l,4)) ! i-k plane
+    allocate(buf_k(imax_l,jmax_l,4)) ! i-j plane
     allocate(r_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),rnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(p_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),pnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(x_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),xnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
@@ -468,7 +462,7 @@ module mysubs
              end do
           end do
 
-          call exchange_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+          call exchange_halo(p_l,buf_i,buf_j,buf_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                if_update_i,if_update_j,if_update_k,comm_cart)
        end do ! iter
@@ -487,7 +481,7 @@ module mysubs
           count_write=count_write+1
        end if
        
-       call exchange_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+       call exchange_halo(a_l,buf_i,buf_j,buf_k, &
             src_i,dest_i,src_j,dest_j,src_k,dest_k, &
             if_update_i,if_update_j,if_update_k,comm_cart)
 
@@ -495,8 +489,7 @@ module mysubs
     end do ! tstep
     
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
-    deallocate(buf_p_l_i,buf_p_l_j,buf_p_l_k)
-    deallocate(buf_a_l_i,buf_a_l_j,buf_a_l_k)
+    deallocate(buf_i,buf_j,buf_k)
 
     return
   end subroutine diffuse
