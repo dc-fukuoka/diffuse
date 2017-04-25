@@ -17,7 +17,7 @@ module params
   integer::iam,np,ierr
 end module params
 
-! to be able to pass allocatable variables, need to use module...
+! to be able to return allocated arrays, need to use module...
 module mysubs
   contains
   subroutine myinit(fh)
@@ -27,7 +27,7 @@ module mysubs
     integer::info
     character(8)::data_out="data_out"
     
-    !    call mpi_info_set(info,"striping_factor","8",ierr)
+    ! call mpi_info_set(info,"striping_factor","8",ierr)
     info = mpi_info_null
     
     call mpi_init(ierr)
@@ -484,10 +484,6 @@ module mysubs
              end do
           end do
 
-          ! call exchange_halo(p_l,buf_i,buf_j,buf_k, &
-          !      src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-          !      if_update_i,if_update_j,if_update_k,comm_cart)
-
        end do ! iter
 
        ! converged
@@ -503,10 +499,6 @@ module mysubs
           call write_output(a_l,ifiletype_write,fh,count_write)
           count_write=count_write+1
        end if
-
-       ! call exchange_halo(a_l,buf_i,buf_j,buf_k, &
-       !      src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       !      if_update_i,if_update_j,if_update_k,comm_cart)
 
     end do ! tstep
 
@@ -532,11 +524,9 @@ module mysubs
     tmp(1:imax_l,1:jmax_l,1:kmax_l) = a_l(1:imax_l,1:jmax_l,1:kmax_l)
 
     ! C-like writing, exclude datasize information
-!    call mpi_info_set(info,"striping_factor","8",ierr)
     info = mpi_info_null
     call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_write,"native",info,ierr)
     call mpi_file_write_all(fh,tmp(1,1,1),imax_l*jmax_l*kmax_l,mpi_real8,istat,ierr)
-!    call mpi_info_free(info,ierr)
   end subroutine write_output
 end module mysubs
 
