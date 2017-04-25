@@ -20,13 +20,20 @@ end module params
 ! to be able to pass allocatable variables, need to use module...
 module mysubs
   contains
-  subroutine myinit()
+  subroutine myinit(fh)
     use params
     implicit none
-
+    integer,intent(out)::fh
+    integer::info
+    character(8)::data_out="data_out"
+    
+    !    call mpi_info_set(info,"striping_factor","8",ierr)
+    info = mpi_info_null
+    
     call mpi_init(ierr)
     call mpi_comm_rank(mpi_comm_world,iam,ierr)
     call mpi_comm_size(mpi_comm_world,np ,ierr)
+    call mpi_file_open(mpi_comm_world,data_out,mpi_mode_wronly+mpi_mode_create,info,fh,ierr)
     return
   end subroutine myinit
 
@@ -46,17 +53,19 @@ module mysubs
     return
   end subroutine free_data
 
-  subroutine myfini(a_l,anew_l,ifiletype_read,ifiletype_write,comm_cart)
+  subroutine myfini(a_l,anew_l,ifiletype_read,ifiletype_write,fh,comm_cart)
     use params
     implicit none
     real(8),allocatable,dimension(:,:,:),intent(inout)::a_l,anew_l
-    integer,intent(inout)::ifiletype_read,ifiletype_write,comm_cart
+    integer,intent(inout)::ifiletype_read,fh,ifiletype_write,comm_cart
+    character(8)::data_out="data_out"
 
     call free_data(a_l)
     call free_data(anew_l)
     call free_type(ifiletype_read)
     call free_type(ifiletype_write)
     call mpi_comm_free(comm_cart,ierr)
+    call mpi_file_close(fh,ierr)
     call mpi_finalize(ierr)
     return
   end subroutine myfini
@@ -276,7 +285,7 @@ module mysubs
   subroutine diffuse(a_l,anew_l,ifiletype_read, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k,comm_cart, &
-       ifiletype_write)
+       ifiletype_write,fh)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_l,anew_l
@@ -291,6 +300,7 @@ module mysubs
     real(8)::r2,pap,rnew2,r2_l,pap_l,rnew2_l,b2,b2_l
     integer::i,j,k,tstep,iter
     integer(kind=mpi_offset_kind)::count_write=0
+    integer,intent(in)::fh
 
 
     ! temporary buffer for halo exchange
@@ -490,7 +500,7 @@ module mysubs
        end do
 
        if (mod(tstep,tstep_max/freq_write).eq.0) then
-          call write_output(a_l,ifiletype_write,count_write)
+          call write_output(a_l,ifiletype_write,fh,count_write)
           count_write=count_write+1
        end if
 
@@ -506,14 +516,13 @@ module mysubs
     return
   end subroutine diffuse
 
-  subroutine write_output(a_l,ifiletype_write,ntimes)
+  subroutine write_output(a_l,ifiletype_write,fh,ntimes)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(in)::a_l
     real(8),dimension(imax_l,jmax_l,kmax_l)::tmp
-    integer,intent(in)::ifiletype_write
-    character(8)::data_out="data_out"
-    integer::fh,info
+    integer,intent(in)::ifiletype_write,fh
+    integer::info
     integer(kind=mpi_offset_kind)::idisp=0, ntimes
     integer::istat(mpi_status_size)
     integer::i,j,k
@@ -525,10 +534,8 @@ module mysubs
     ! C-like writing, exclude datasize information
 !    call mpi_info_set(info,"striping_factor","8",ierr)
     info = mpi_info_null
-    call mpi_file_open(mpi_comm_world,data_out,mpi_mode_wronly+mpi_mode_create,info,fh,ierr)
     call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_write,"native",info,ierr)
     call mpi_file_write_all(fh,tmp(1,1,1),imax_l*jmax_l*kmax_l,mpi_real8,istat,ierr)
-    call mpi_file_close(fh,ierr)
 !    call mpi_info_free(info,ierr)
   end subroutine write_output
 end module mysubs
@@ -538,14 +545,14 @@ program main
   use params
   use mysubs
   implicit none
-  real(8),allocatable,dimension(:,:,:)::a_l, anew_l
-  integer::ifiletype_read, ifiletype_write
+  real(8),allocatable,dimension(:,:,:)::a_l,anew_l
+  integer::fh,ifiletype_read,ifiletype_write
   integer::src_i,dest_i,src_j,dest_j,src_k,dest_k
   logical,dimension(2)::if_update_i=.true.,if_update_j=.true.,if_update_k=.true.
   integer::comm_cart
   real(8)::time,t0
 
-  call myinit()
+  call myinit(fh)
   call read_inputs(11)
   call allocate_arrays(a_l,anew_l)
   call create_datatypes(ifiletype_read,ifiletype_write, &
@@ -556,11 +563,10 @@ program main
   t0 = mpi_wtime()
   call diffuse(a_l,anew_l,ifiletype_read, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_i,if_update_j,if_update_k,comm_cart,ifiletype_write)
+       if_update_i,if_update_j,if_update_k,comm_cart,ifiletype_write,fh)
   call mpi_barrier(mpi_comm_world,ierr)
   time = mpi_wtime() - t0
   if (iam.eq.0) write(6,*) "time[s]:",time
-  call write_output(a_l,ifiletype_write,0)
-  call myfini(a_l,anew_l,ifiletype_read,ifiletype_write,comm_cart)
+  call myfini(a_l,anew_l,ifiletype_read,ifiletype_write,fh,comm_cart)
   stop
 end program main

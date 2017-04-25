@@ -10,9 +10,9 @@ jmax = 64
 kmax = 64
 /
 &param2
-idiv = 4
-jdiv = 2
-kdiv = 16
+idiv = 1
+jdiv = 1
+kdiv = 4
 /
 
 &param3
