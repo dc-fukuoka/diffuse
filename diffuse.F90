@@ -302,7 +302,6 @@ module mysubs
     integer(kind=mpi_offset_kind)::count_write=0
     integer,intent(in)::fh
 
-
     ! temporary buffer for halo exchange
     allocate(buf_i(jmax_l,kmax_l,4)) ! j-k plane
     allocate(buf_j(imax_l,kmax_l,4)) ! i-k plane
@@ -527,6 +526,8 @@ module mysubs
     info = mpi_info_null
     call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_write,"native",info,ierr)
     call mpi_file_write_all(fh,tmp(1,1,1),imax_l*jmax_l*kmax_l,mpi_real8,istat,ierr)
+    
+    return
   end subroutine write_output
 end module mysubs
 

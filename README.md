@@ -6,10 +6,10 @@ input file: fort.11
     
     $ cat fort.11
     &param0
-    dt  = 1.0d-6 ! stride of time
-    dx  = 1.0d-2 ! stride of x, y, z direction
-    tol = 1.0d-40  ! convergence tolerance of CG method
-    diff_coef = 1.0d2 ! diffusion coefficient
+    dt        = 1.0d-6  ! stride of time
+    dx        = 1.0d-2  ! stride of x, y, z direction
+    tol       = 1.0d-40 ! convergence tolerance of CG method
+    diff_coef = 1.0d2   ! diffusion coefficient
     /
     &param1
     imax = 64 ! global size for x direction
@@ -17,15 +17,16 @@ input file: fort.11
     kmax = 64 ! global size for z direction
     /
     &param2
-    idiv = 4  ! # of division for x direction
-    jdiv = 2  ! # of division for y direction
-    kdiv = 16 ! # of division for z direction
+    idiv = 1 ! # of division for x direction
+    jdiv = 1 ! # of division for y direction
+    kdiv = 4 ! # of division for z direction
+    ! idiv*jdiv*kdiv must equal to total # of processes(np)
     /
     
     &param3
-    iter_max = 262144 ! maximum iteration of CG method
-    tstep_max = 100   ! maximum timestep
-    freq_write = 10   ! frequency of writing the reusult, write each tstep_max/freq_write time
+    iter_max   = 262144 ! imax*jmax*kmax
+    tstep_max  = 100    ! maximum timestep
+    freq_write = 100    ! frequency of writing the reusult, write each tstep_max/freq_write time
     /
 
 how to run:

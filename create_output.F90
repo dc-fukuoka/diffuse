@@ -32,7 +32,6 @@ program main
      do j=1,jmax
         do i=1,imax
            write(unit_write,*) i,j,a(i,j,k)
-!           if (i.eq.imax) write(unit_write,*)
            if (i.eq.imax.and.j.eq.jmax) then
               write(unit_write,*)
               write(unit_write,*)
