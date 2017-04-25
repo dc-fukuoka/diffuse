@@ -58,7 +58,7 @@ module mysubs
     call free_type(ifiletype_write)
     call mpi_comm_free(comm_cart,ierr)
     call mpi_finalize(ierr)
-    return 
+    return
   end subroutine myfini
 
   subroutine read_inputs(unit)
@@ -184,7 +184,6 @@ module mysubs
     if (coords(3).eq.0)      if_update_k(2) = .false. ! - boundary on k direction
     if (coords(3).eq.kdiv-1) if_update_k(1) = .false. ! + boundary on k direction
 
-    
     return
   end subroutine create_datatypes
 
@@ -206,7 +205,6 @@ module mysubs
     return
   end subroutine read_initial_data
 
-  ! OK
   subroutine exchange_halo(a_in, &
        buf_i, buf_j, buf_k, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
@@ -221,6 +219,7 @@ module mysubs
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
     integer,intent(in)::comm_cart
     integer::ireqs(ndims*4),istats(mpi_status_size,ndims*4)
+    integer::i,j,k
 
     ! need to be a face, not a line
     ! i direction
@@ -243,7 +242,7 @@ module mysubs
     call mpi_isend(buf_j(1,1,3),imax_l*kmax_l,mpi_real8,dest_j,3,comm_cart,ireqs(7), ierr)
     call mpi_irecv(buf_j(1,1,4),imax_l*kmax_l,mpi_real8,src_j, 3,comm_cart,ireqs(8), ierr)
 
-    ! k direction    
+    ! k direction
     buf_k(1:imax_l,1:jmax_l,1) = a_in(1:imax_l,1:jmax_l,1     ) ! send to -k, src_k
     buf_k(1:imax_l,1:jmax_l,2) = 0.0d0
     buf_k(1:imax_l,1:jmax_l,3) = a_in(1:imax_l,1:jmax_l,kmax_l) ! send to +k, dest_k
@@ -260,14 +259,14 @@ module mysubs
     ! if (coords(2).eq.jdiv-1) if_update_j(1) = .false. ! + boundary on j direction
     ! if (coords(3).eq.0)      if_update_k(2) = .false. ! - boundary on k direction
     ! if (coords(3).eq.kdiv-1) if_update_k(1) = .false. ! + boundary on k direction
-    
-    ! i direction      
+
+    ! i direction
     if (if_update_i(1)) a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2) ! receive from -i direction i=1      -> imax_l+1
     if (if_update_i(2)) a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4) ! receive from +i direction i=imax_l -> 0
-    ! j drection       
+    ! j drection
     if (if_update_j(1)) a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2) ! receive from -j direction j=1      -> jmax_l+1
     if (if_update_j(2)) a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4) ! receive from +j direction j=jmax_l -> 0
-    ! k direction      
+    ! k direction
     if (if_update_k(1)) a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2) ! receive from -k direction k=1      -> kmax_l+1
     if (if_update_k(2)) a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4) ! receive from +k direction k=kmax_l -> 0
 
@@ -319,9 +318,8 @@ module mysubs
     end do
 
     ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k (fortran order)
-    ! coef1*(anew(g+1)+anew(g-1)+anew(g+imax+2)+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2anew(g) = a(g)
-
-    ! CG method
+    ! coef1*(anew(g+1)+anew(g-1)+anew(g+imax+2)+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
+    ! 7-stencil symmetric matrix, CG method can be used
 
     do tstep=1,tstep_max ! time step
 #if 1
@@ -331,7 +329,11 @@ module mysubs
           end if
        end if
 #endif
-       
+
+       call exchange_halo(a_l,buf_i,buf_j,buf_k, &
+            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+            if_update_i,if_update_j,if_update_k,comm_cart)
+
        do k=0,kmax_l+1
           do j=0,jmax_l+1
              do i=0,imax_l+1
@@ -342,7 +344,11 @@ module mysubs
 
        b2   = 0.0d0
        b2_l = 0.0d0
-       
+
+       call exchange_halo(x_l,buf_i,buf_j,buf_k, &
+            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+            if_update_i,if_update_j,if_update_k,comm_cart)
+
        do k=1,kmax_l
           do j=1,jmax_l
              do i=1,imax_l
@@ -368,9 +374,15 @@ module mysubs
           eps     = 0.0d0
           alpha   = 0.0d0
           beta    = 0.0d0
+
           ! xnew_l(:,:,:)  = 0.0d0
           ! rnew_l(:,:,:)  = 0.0d0
           ! pnew_l(:,:,:)  = 0.0d0
+
+          call exchange_halo(p_l,buf_i,buf_j,buf_k, &
+               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               if_update_i,if_update_j,if_update_k,comm_cart)
+
           do k=1,kmax_l
              do j=1,jmax_l
                 do i=1,imax_l
@@ -462,9 +474,10 @@ module mysubs
              end do
           end do
 
-          call exchange_halo(p_l,buf_i,buf_j,buf_k, &
-               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-               if_update_i,if_update_j,if_update_k,comm_cart)
+          ! call exchange_halo(p_l,buf_i,buf_j,buf_k, &
+          !      src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+          !      if_update_i,if_update_j,if_update_k,comm_cart)
+
        end do ! iter
 
        ! converged
@@ -480,14 +493,13 @@ module mysubs
           call write_output(a_l,ifiletype_write,count_write)
           count_write=count_write+1
        end if
-       
-       call exchange_halo(a_l,buf_i,buf_j,buf_k, &
-            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-            if_update_i,if_update_j,if_update_k,comm_cart)
 
+       ! call exchange_halo(a_l,buf_i,buf_j,buf_k, &
+       !      src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+       !      if_update_i,if_update_j,if_update_k,comm_cart)
 
     end do ! tstep
-    
+
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
     deallocate(buf_i,buf_j,buf_k)
 
@@ -507,9 +519,9 @@ module mysubs
     integer::i,j,k
 
     idisp = ntimes*sizeof(a_l(1,1,1))*imax*jmax*kmax
-    
+
     tmp(1:imax_l,1:jmax_l,1:kmax_l) = a_l(1:imax_l,1:jmax_l,1:kmax_l)
-    
+
     ! C-like writing, exclude datasize information
 !    call mpi_info_set(info,"striping_factor","8",ierr)
     info = mpi_info_null
