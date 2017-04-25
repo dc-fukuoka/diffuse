@@ -354,10 +354,6 @@ module mysubs
        b2   = 0.0d0
        b2_l = 0.0d0
 
-       call exchange_halo(x_l,buf_i,buf_j,buf_k, &
-            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-            if_update_i,if_update_j,if_update_k,comm_cart)
-
        do k=1,kmax_l
           do j=1,jmax_l
              do i=1,imax_l
