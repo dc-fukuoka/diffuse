@@ -1,6 +1,5 @@
 *diffuse* - 3D diffusion equation solver by using CG method(no precondition) with MPI.  
-          intel compiler is needed.  
-	  the result was compared to serial version(cg.F90)  
+            the result was compared to serial version(cg.F90)  
 ===============	  
 input file: fort.11
     
