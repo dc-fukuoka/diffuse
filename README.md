@@ -1,5 +1,7 @@
-*diffuse* - 3D diffusion equation solver by using CG method(no precondition) with MPI.  
-            the result was compared to serial version(cg.F90)  
+*diffuse* - 3D diffusion equation solver by using CG method(no precondition) with MPI.
+===============	  
+the result was compared to serial version(cg.F90)
+hybrid version is still under testing.
 ===============	  
 input file: fort.11
 
