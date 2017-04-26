@@ -96,6 +96,7 @@ module mysubs
        write(6,"(a,4i5)") "imax,jmax,kmax:",imax,jmax,kmax
        write(6,"(a,2i8)") "iter_max,tstep_max:",iter_max,tstep_max
        write(6,"(a,3i3)") "idiv,jdiv,kdiv:",idiv,jdiv,kdiv
+       write(6,"(a,i4)" ) "freq_write:",freq_write
     end if
     imax_l = imax/idiv
     jmax_l = jmax/jdiv
