@@ -227,7 +227,7 @@ module mysubs
     return
   end subroutine read_initial_data
 
-  subroutine async_sendrecv_halo(a_in, &
+  subroutine isendrecv_halo(a_in, &
        buf_i, buf_j, buf_k, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        comm_cart,ireqs)
@@ -282,11 +282,11 @@ module mysubs
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
     !$omp end single nowait
-    ! since nowait is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_sendrecv_halo() is called just after calling of async_sendrecv_halo().
+    ! since nowait is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
     return
-  end subroutine async_sendrecv_halo
+  end subroutine isendrecv_halo
 
-  subroutine wait_sendrecv_halo(a_in, &
+  subroutine wait_halo(a_in, &
        buf_i, buf_j, buf_k, &
        if_update_i,if_update_j,if_update_k,ireqs)
     use params
@@ -338,7 +338,7 @@ module mysubs
     end if
 
     return
-  end subroutine wait_sendrecv_halo
+  end subroutine wait_halo
 
   subroutine diffuse(a_l,anew_l,ifiletype_read, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
@@ -409,15 +409,15 @@ module mysubs
        !$omp end single nowait
 #endif
 #ifndef _OVERLAP_MPI
-       call async_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+       call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
             src_i,dest_i,src_j,dest_j,src_k,dest_k, &
             comm_cart,ireqs_a_l)
        !$omp barrier
-       call wait_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+       call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
             if_update_i,if_update_j,if_update_k,ireqs_a_l)
 #else
        if (tstep.ne.1) then
-          call wait_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+          call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
                if_update_i,if_update_j,if_update_k,ireqs_a_l)
        endif
 #endif
@@ -463,22 +463,22 @@ module mysubs
           beta    = 0.0d0
           !$omp parallel private(i,j,k)
 #ifndef _OVERLAP_MPI
-          call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+          call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                comm_cart,ireqs_p_l)
           !$omp barrier
-          call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+          call wait_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                if_update_i,if_update_j,if_update_k,ireqs_p_l)
 #else
           if (iter.eq.1) then
-             call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+             call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                   comm_cart,ireqs_p_l)
              !$omp barrier
-             call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+             call wait_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   if_update_i,if_update_j,if_update_k,ireqs_p_l)
           else
-             call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+             call wait_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   if_update_i,if_update_j,if_update_k,ireqs_p_l)
           end if
 #endif
@@ -575,7 +575,7 @@ module mysubs
           !$omp end do nowait
 #ifdef _OVERLAP_MPI
           if (iter.ne.iter_max) then
-             call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+             call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                   comm_cart,ireqs_p_l)
           end if
@@ -607,7 +607,7 @@ module mysubs
        !$omp end do nowait
 #ifdef _OVERLAP_MPI
        if (tstep.ne.tstep_max) then
-          call async_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+          call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                comm_cart,ireqs_a_l)
        end if
