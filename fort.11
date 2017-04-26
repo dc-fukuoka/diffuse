@@ -20,5 +20,5 @@ kdiv = 2 ! # of division for z direction
 &param3
 iter_max   = 262144 ! maximum CG method iteration
 tstep_max  = 100    ! maximum timestep
-freq_write = 100    ! frequency of writing the result, write each tstep_max/freq_write time
+freq_write = 1    ! frequency of writing the result, write each tstep_max/freq_write time
 /
