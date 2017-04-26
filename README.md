@@ -1,9 +1,10 @@
 *diffuse* - 3D diffusion equation solver by using CG method(no precondition) with MPI.  
             the result was compared to serial version(cg.F90)  
-===============
-\begin{equation}
-\sum_{\forall i}{x_i^{2}}
-\end{equation}
+===============  
+```math
+\left( \sum_{k=1}^n a_k b_k \right)^{!!2} \leq
+\left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
+```
 ===============	  
 input file: fort.11
 
