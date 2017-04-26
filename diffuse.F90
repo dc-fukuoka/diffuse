@@ -293,7 +293,7 @@ module mysubs
     real(8),dimension(1:imax_l,1:jmax_l,4),intent(inout)::buf_k
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     integer,intent(in)::comm_cart
-    integer,intent(inout)::ireqs(ndims*4)
+    integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
 
     ! need to be a face, not a line
@@ -340,7 +340,7 @@ module mysubs
     real(8),dimension(1:imax_l,1:kmax_l,4),intent(inout)::buf_j
     real(8),dimension(1:imax_l,1:jmax_l,4),intent(inout)::buf_k
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
-    integer,intent(in)::ireqs(ndims*4)
+    integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
 
     call mpi_waitall(ndims*4,ireqs,istats,ierr)
@@ -380,17 +380,23 @@ module mysubs
     integer,intent(in)::fh
 
     real(8),dimension(:,:,:),allocatable::r_l,rnew_l,p_l,pnew_l,x_l,xnew_l
-    real(8),dimension(:,:,:),allocatable::buf_i,buf_j,buf_k
+    real(8),dimension(:,:,:),allocatable::buf_a_l_i,buf_a_l_j,buf_a_l_k
+    real(8),dimension(:,:,:),allocatable::buf_p_l_i,buf_p_l_j,buf_p_l_k
     real(8)::coef1,coef2,alpha,beta,eps
     real(8)::r2,pap,rnew2,r2_l,pap_l,rnew2_l,b2,b2_l
     integer::i,j,k,tstep,iter
     integer(kind=mpi_offset_kind)::count_write=0
-    integer::ireqs(ndims*4)
+    integer,dimension(ndims*4)::ireqs_a_l,ireqs_p_l
 
     ! temporary buffer for halo exchange
-    allocate(buf_i(jmax_l,kmax_l,4)) ! j-k plane
-    allocate(buf_j(imax_l,kmax_l,4)) ! i-k plane
-    allocate(buf_k(imax_l,jmax_l,4)) ! i-j plane
+    ! for a_l
+    allocate(buf_a_l_i(jmax_l,kmax_l,4)) ! j-k plane
+    allocate(buf_a_l_j(imax_l,kmax_l,4)) ! i-k plane
+    allocate(buf_a_l_k(imax_l,jmax_l,4)) ! i-j plane
+    ! for p_l
+    allocate(buf_p_l_i(jmax_l,kmax_l,4)) ! j-k plane
+    allocate(buf_p_l_j(imax_l,kmax_l,4)) ! i-k plane
+    allocate(buf_p_l_k(imax_l,jmax_l,4)) ! i-j plane
     allocate(r_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),rnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(p_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),pnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(x_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),xnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
@@ -423,12 +429,19 @@ module mysubs
           end if
        end if
 #endif
-       call async_sendrecv_halo(a_l,buf_i,buf_j,buf_k, &
+#ifndef _OVERLAP_MPI
+       call async_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
             src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-            comm_cart,ireqs)
-       call wait_sendrecv_halo(a_l,buf_i,buf_j,buf_k, &
-            if_update_i,if_update_j,if_update_k,ireqs)
-       
+            comm_cart,ireqs_a_l)
+       call wait_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+            if_update_i,if_update_j,if_update_k,ireqs_a_l)
+#else
+       if (tstep.ne.1) then
+          call wait_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+               if_update_i,if_update_j,if_update_k,ireqs_a_l)
+       endif
+#endif
+
        do k=0,kmax_l+1
           do j=0,jmax_l+1
              do i=0,imax_l+1
@@ -466,17 +479,25 @@ module mysubs
           alpha   = 0.0d0
           beta    = 0.0d0
 
-          ! xnew_l(:,:,:)  = 0.0d0
-          ! rnew_l(:,:,:)  = 0.0d0
-          ! pnew_l(:,:,:)  = 0.0d0
-
-       call async_sendrecv_halo(p_l,buf_i,buf_j,buf_k, &
+#ifndef _OVERLAP_MPI
+       call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
             src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-            comm_cart,ireqs)
-       call wait_sendrecv_halo(p_l,buf_i,buf_j,buf_k, &
-            if_update_i,if_update_j,if_update_k,ireqs)
-
-          do k=1,kmax_l
+            comm_cart,ireqs_p_l)
+       call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+            if_update_i,if_update_j,if_update_k,ireqs_p_l)
+#else
+       if (iter.eq.1) then
+          call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               comm_cart,ireqs_p_l)
+          call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+               if_update_i,if_update_j,if_update_k,ireqs_p_l)
+       else
+          call wait_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+               if_update_i,if_update_j,if_update_k,ireqs_p_l)
+       end if
+#endif
+       do k=1,kmax_l
              do j=1,jmax_l
                 do i=1,imax_l
                    r2_l  = r2_l+r_l(i,j,k)*r_l(i,j,k)
@@ -552,21 +573,29 @@ module mysubs
           do k=1,kmax_l
              do j=1,jmax_l
                 do i=1,imax_l
-                   pnew_l(i,j,k) = rnew_l(i,j,k)+beta*p_l(i,j,k)
+                   ! pnew_l(i,j,k) = rnew_l(i,j,k)+beta*p_l(i,j,k)
+                   p_l(i,j,k) = rnew_l(i,j,k)+beta*p_l(i,j,k)
                 end do
              end do
           end do
+
+#ifdef _OVERLAP_MPI
+          if (iter.ne.iter_max) then
+             call async_sendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
+                  src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+                  comm_cart,ireqs_p_l)
+          end if
+#endif
 
           do k=1,kmax_l
              do j=1,jmax_l
                 do i=1,imax_l
                    x_l(i,j,k) = xnew_l(i,j,k)
                    r_l(i,j,k) = rnew_l(i,j,k)
-                   p_l(i,j,k) = pnew_l(i,j,k)
+                   ! p_l(i,j,k) = pnew_l(i,j,k)
                 end do
              end do
           end do
-
        end do ! iter
 
        ! converged
@@ -578,6 +607,14 @@ module mysubs
           end do
        end do
 
+#ifdef _OVERLAP_MPI
+       if (tstep.ne.tstep_max) then
+          call async_sendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+               src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+               comm_cart,ireqs_a_l)
+       end if
+#endif
+       
        if (mod(tstep,tstep_max/freq_write).eq.0) then
           call write_output(a_l,ifiletype_write,fh,count_write)
           count_write=count_write+1
@@ -586,7 +623,8 @@ module mysubs
     end do ! tstep
 
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
-    deallocate(buf_i,buf_j,buf_k)
+    deallocate(buf_a_l_i,buf_a_l_j,buf_a_l_k)
+    deallocate(buf_p_l_i,buf_p_l_j,buf_p_l_k)
 
     return
   end subroutine diffuse

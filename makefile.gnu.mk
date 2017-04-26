@@ -1,6 +1,6 @@
 fc       = gfortran
 mpifc    = mpif90
-fppflags = -fpp
+fppflags = -fpp -D_OVERLAP_MPI
 fflags   = -g -O3 -mavx
 openmp   = -fopenmp
 ldflags  =
@@ -12,7 +12,7 @@ create_input: create_input.F90
 create_output: create_output.F90
 	$(fc) $(openmp) $(fflags) $^ -o $@
 diffuse: diffuse.F90
-	$(mpifc) $(fflags) $^ -o $@
+	$(mpifc) $(fppflags) $(fflags) $^ -o $@
 clean:
 	rm -f f create_input create_output diffuse *.mod *~ core.* data_in data_out
 	find . -type f -name "fort.*"|grep -v fort.11|xargs rm	
