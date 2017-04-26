@@ -1,1 +1,3 @@
-create hybrid version and implement OpenMP communication/computation overlap
+- implement hybrid OpenACC/MPI version.
+- implement hybrid CUDA/MPI version.
+- implement hybrid intel Xeon Phi offload/MPI version.
