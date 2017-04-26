@@ -214,74 +214,7 @@ module mysubs
 
     return
   end subroutine read_initial_data
-#if 0
-  subroutine exchange_halo(a_in, &
-       buf_i, buf_j, buf_k, &
-       src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-       if_update_i,if_update_j,if_update_k,comm_cart)
-    use params
-    implicit none
-    real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_in
-    real(8),dimension(1:jmax_l,1:kmax_l,4),intent(inout)::buf_i
-    real(8),dimension(1:imax_l,1:kmax_l,4),intent(inout)::buf_j
-    real(8),dimension(1:imax_l,1:jmax_l,4),intent(inout)::buf_k
-    integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
-    logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
-    integer,intent(in)::comm_cart
-    integer::ireqs(ndims*4),istats(mpi_status_size,ndims*4)
 
-    ! need to be a face, not a line
-    ! i direction
-    buf_i(1:jmax_l,1:kmax_l,1) = a_in(1,     1:jmax_l,1:kmax_l) ! send to -i, src_i
-    buf_i(1:jmax_l,1:kmax_l,2) = 0.0d0
-    buf_i(1:jmax_l,1:kmax_l,3) = a_in(imax_l,1:jmax_l,1:kmax_l) ! send to +i, dest_i
-    buf_i(1:jmax_l,1:kmax_l,4) = 0.0d0
-    call mpi_isend(buf_i(1,1,1),jmax_l*kmax_l,mpi_real8,src_i, 0,comm_cart,ireqs(1), ierr)
-    call mpi_irecv(buf_i(1,1,2),jmax_l*kmax_l,mpi_real8,dest_i,0,comm_cart,ireqs(2), ierr)
-    call mpi_isend(buf_i(1,1,3),jmax_l*kmax_l,mpi_real8,dest_i,1,comm_cart,ireqs(3), ierr)
-    call mpi_irecv(buf_i(1,1,4),jmax_l*kmax_l,mpi_real8,src_i, 1,comm_cart,ireqs(4), ierr)
-
-    ! j direction
-    buf_j(1:imax_l,1:kmax_l,1) = a_in(1:imax_l,1,     1:kmax_l) ! send to -j, src_j
-    buf_j(1:imax_l,1:kmax_l,2) = 0.0d0
-    buf_j(1:imax_l,1:kmax_l,3) = a_in(1:imax_l,jmax_l,1:kmax_l) ! send to +j, dest_j
-    buf_j(1:imax_l,1:kmax_l,4) = 0.0d0
-    call mpi_isend(buf_j(1,1,1),imax_l*kmax_l,mpi_real8,src_j, 2,comm_cart,ireqs(5), ierr)
-    call mpi_irecv(buf_j(1,1,2),imax_l*kmax_l,mpi_real8,dest_j,2,comm_cart,ireqs(6), ierr)
-    call mpi_isend(buf_j(1,1,3),imax_l*kmax_l,mpi_real8,dest_j,3,comm_cart,ireqs(7), ierr)
-    call mpi_irecv(buf_j(1,1,4),imax_l*kmax_l,mpi_real8,src_j, 3,comm_cart,ireqs(8), ierr)
-
-    ! k direction
-    buf_k(1:imax_l,1:jmax_l,1) = a_in(1:imax_l,1:jmax_l,1     ) ! send to -k, src_k
-    buf_k(1:imax_l,1:jmax_l,2) = 0.0d0
-    buf_k(1:imax_l,1:jmax_l,3) = a_in(1:imax_l,1:jmax_l,kmax_l) ! send to +k, dest_k
-    buf_k(1:imax_l,1:jmax_l,4) = 0.0d0
-    call mpi_isend(buf_k(1,1,1),imax_l*jmax_l,mpi_real8,src_k, 4,comm_cart,ireqs(9), ierr)
-    call mpi_irecv(buf_k(1,1,2),imax_l*jmax_l,mpi_real8,dest_k,4,comm_cart,ireqs(10),ierr)
-    call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
-    call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
-    call mpi_waitall(ndims*4,ireqs,istats,ierr)
-
-    ! if (coords(1).eq.0)      if_update_i(2) = .false. ! - boundary on i direction
-    ! if (coords(1).eq.idiv-1) if_update_i(1) = .false. ! + boundary on i direction
-    ! if (coords(2).eq.0)      if_update_j(2) = .false. ! - boundary on j direction
-    ! if (coords(2).eq.jdiv-1) if_update_j(1) = .false. ! + boundary on j direction
-    ! if (coords(3).eq.0)      if_update_k(2) = .false. ! - boundary on k direction
-    ! if (coords(3).eq.kdiv-1) if_update_k(1) = .false. ! + boundary on k direction
-
-    ! i direction
-    if (if_update_i(1)) a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2) ! receive from -i direction i=1      -> imax_l+1
-    if (if_update_i(2)) a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4) ! receive from +i direction i=imax_l -> 0
-    ! j drection
-    if (if_update_j(1)) a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2) ! receive from -j direction j=1      -> jmax_l+1
-    if (if_update_j(2)) a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4) ! receive from +j direction j=jmax_l -> 0
-    ! k direction
-    if (if_update_k(1)) a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2) ! receive from -k direction k=1      -> kmax_l+1
-    if (if_update_k(2)) a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4) ! receive from +k direction k=kmax_l -> 0
-
-    return
-  end subroutine exchange_halo
-#endif
   subroutine async_sendrecv_halo(a_in, &
        buf_i, buf_j, buf_k, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
