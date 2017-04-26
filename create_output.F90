@@ -20,13 +20,7 @@ program main
   write(6,*) "imax,jmax,kmax:",jmax,jmax,kmax
   write(6,*) "iter_max,tstep_max,freq_write:",iter_max,tstep_max,freq_write
   do l=1,freq_write
-     do k=1,kmax
-        do j=1,jmax
-           do i=1,imax
-              read(unit_read) a(i,j,k)
-           end do
-        end do
-     end do
+     read(unit_read) a
      
      k = kmax/2
      do j=1,jmax
