@@ -1,6 +1,6 @@
 fc       = ifort
 mpifc    = mpif90
-fppflags = -fpp -D_OVERLAP
+fppflags = -fpp -D_OVERLAP_MPI
 fflags   = -g -O3 -mavx
 openmp   = -fopenmp
 ldflags  =
