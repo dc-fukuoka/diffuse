@@ -45,4 +45,5 @@ maximum timestep: 100
 with 1   core: 38.3777060508728 s  
 with 32 cores:  2.2367570400238 s  
 
+the animation shows that how a gaussian wave decays at k = kmax/2
 ![Alt text](./diffuse.gif?raw=true "diffuse.gif")
