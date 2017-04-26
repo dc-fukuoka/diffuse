@@ -1,7 +1,7 @@
 fc       = ifort
 mpifc    = mpiifort
 fppflags = -fpp
-fflags   = -g -O3 -march=core-avx2
+fflags   = -g -O3 -mavx
 openmp   = -fopenmp
 ldflags  =
 libs     =
