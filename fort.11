@@ -14,10 +14,11 @@ idiv = 1 ! # of division for x direction
 jdiv = 1 ! # of division for y direction
 kdiv = 4 ! # of division for z direction
 ! idiv*jdiv*kdiv must equal to total # of processes(np)
+! imax/idiv, jmax/jdiv and kmax/kdiv must be an integer
 /
 
 &param3
-iter_max   = 262144 ! imax*jmax*kmax
+iter_max   = 262144 ! maximum CG method iteration
 tstep_max  = 100    ! maximum timestep
-freq_write = 100    ! frequency of writing the reusult, write each tstep_max/freq_write time
+freq_write = 100    ! frequency of writing the result, write each tstep_max/freq_write time
 /

@@ -2,8 +2,8 @@
             the result was compared to serial version(cg.F90)  
 ===============	  
 input file: fort.11
-    
-    $ cat fort.11
+
+    $ cat fort.11 
     &param0
     dt        = 1.0d-6  ! stride of time
     dx        = 1.0d-2  ! stride of x, y, z direction
@@ -20,13 +20,15 @@ input file: fort.11
     jdiv = 1 ! # of division for y direction
     kdiv = 4 ! # of division for z direction
     ! idiv*jdiv*kdiv must equal to total # of processes(np)
+    ! imax/idiv, jmax/jdiv and kmax/kdiv must be an integer
     /
     
     &param3
-    iter_max   = 262144 ! imax*jmax*kmax
+    iter_max   = 262144 ! maximum CG method iteration
     tstep_max  = 100    ! maximum timestep
-    freq_write = 100    ! frequency of writing the reusult, write each tstep_max/freq_write time
+    freq_write = 100    ! frequency of writing the result, write each tstep_max/freq_write time
     /
+
 
 how to run:
     
