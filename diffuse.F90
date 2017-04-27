@@ -124,6 +124,7 @@ module mysubs
 
     allocate(a_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(anew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+    !$omp parallel do private(i,j,k)
     do k=0,kmax_l+1
        do j=0,jmax_l+1
           do i=0,imax_l+1
@@ -242,6 +243,7 @@ module mysubs
     integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
 
+    !$omp barrier
     ! need to be a face, not a line
     ! i direction
     !$omp workshare
@@ -281,8 +283,8 @@ module mysubs
     call mpi_irecv(buf_k(1,1,2),imax_l*jmax_l,mpi_real8,dest_k,4,comm_cart,ireqs(10),ierr)
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
-    !$omp end single
-
+    !$omp end single nowait
+    ! since nowait is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
     return
   end subroutine isendrecv_halo
 
@@ -299,6 +301,7 @@ module mysubs
     integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
 
+    !$omp barrier
     !$omp single
     call mpi_waitall(ndims*4,ireqs,istats,ierr)
     !$omp end single
@@ -337,6 +340,7 @@ module mysubs
        !$omp end workshare nowait
     end if
     !$omp barrier
+    
     return
   end subroutine wait_halo
 
