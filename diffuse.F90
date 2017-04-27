@@ -282,7 +282,7 @@ module mysubs
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
     !$omp end single nowait
-    ! since is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
+    ! since nowait is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
     return
   end subroutine isendrecv_halo
 
