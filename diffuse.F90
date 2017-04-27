@@ -282,7 +282,7 @@ module mysubs
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
     !$omp end single nowait
-    ! since nowait is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
+    ! since is added after calling mpi_isend()/mpi_irecv(), a barrier is needed when wait_halo() is called just after calling of isendrecv_halo().
     return
   end subroutine isendrecv_halo
 
@@ -429,11 +429,11 @@ module mysubs
              end do
           end do
        end do
-       !$omp end do nowait
+       !$omp end do
        !$omp single
        b2   = 0.0d0
        b2_l = 0.0d0
-       !$omp end single
+       !$omp end single nowait
        !$omp do reduction(+:b2_l)
        do k=1,kmax_l
           do j=1,jmax_l
@@ -572,7 +572,7 @@ module mysubs
                 end do
              end do
           end do
-          !$omp end do nowait
+          !$omp end do
 #ifdef _OVERLAP_MPI
           if (iter.ne.iter_max) then
              call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
@@ -604,7 +604,7 @@ module mysubs
              end do
           end do
        end do
-       !$omp end do nowait
+       !$omp end do
 #ifdef _OVERLAP_MPI
        if (tstep.ne.tstep_max) then
           call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
