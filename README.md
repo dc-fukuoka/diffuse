@@ -2,7 +2,7 @@
 ===============	  
 the result was compared to serial version(cg.F90)  
 hybrid version is still under testing.
-===============	  
+  
 input file: fort.11
 
     $ cat fort.11 
