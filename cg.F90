@@ -1,19 +1,24 @@
 ! ref: http://ushiro.jp/program/iter/cgsym.htm
 module params
   implicit none
-  integer,parameter::imax=64,jmax=64,kmax=64
-  integer,parameter::max_iter=(imax+2)*(jmax+2)*(kmax+2),max_tstep=100
-  !  integer,parameter::max_iter=1024*1014*128
-  real(8),parameter::dt=1.0d-6, dx=1.0d-2
-  real(8),parameter::tol=1.0d-32
-  real(8),parameter::diff_coef=1.0d2
+  real(8)::dt,dx,tol
+  real(8)::diff_coef ! diffusion coefficient
+  integer::imax, jmax, kmax ! global
+  integer::imax_l, jmax_l, kmax_l
+  integer::iter_max ! maximum iteration for CG method
+  integer::tstep_max ! maximum # of time steps
+  integer::freq_write ! frequency of writing the result
   real(8),parameter::sigma=8.0d0
+  integer,parameter::unit_read=12,unit_write=13
 end module params
 
 program main
   use params
   implicit none
-  real(8),dimension(0:imax+1,0:jmax+1,0:kmax+1)::a,anew,r,rnew,p,pnew,x,xnew,ax,ap
+  namelist /param0/dt,dx,tol,diff_coef
+  namelist /param1/imax,jmax,kmax
+  namelist /param3/iter_max,tstep_max,freq_write
+  real(8),allocatable,dimension(:,:,:)::a,anew,r,rnew,p,pnew,x,xnew,ax,ap
   real(8)::alpha,beta,coef1,coef2
   real(8)::r2,rnew2,pap,b2,eps
   real(8)::t=0.0d0
@@ -21,23 +26,36 @@ program main
   real(8)::sevenstencil
   integer::i,j,k,iter,tstep
 
-  write(6,*) "dt/dx/dx:",dt/dx/dx
+  read(11,param0)
+  read(11,param1)
+  read(11,param3)
+
+  allocate(a(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(anew(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(r(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(rnew(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(p(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(pnew(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(x(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(xnew(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(ax(0:imax+1,0:jmax+1,0:kmax+1))
+  allocate(ap(0:imax+1,0:jmax+1,0:kmax+1))
+  
+  
+  write(6,"(a,4(1pe14.5))") "dt,dx,tol,diff_coef:",dt,dx,tol,diff_coef
+  write(6,"(a,4i5)") "imax,jmax,kmax:",imax,jmax,kmax
+  write(6,"(a,2i8)") "iter_max,tstep_max:",iter_max,tstep_max
+  write(6,"(a,i4)" ) "freq_write:",freq_write
   b2 = 0.0d0
 
   coef1 = -1.0d0*dt/dx/dx*diff_coef
   coef2  = 1.0d0+6.0d0*dt/dx/dx*diff_coef
-  !  write(6,*) "coef1,coef2:",coef1,coef2
 
-  ! initial
-  !$omp parallel do
-  do k=0,kmax+1
-     do j=0,jmax+1
-        do i=0,imax+1
-           !           a(i,j,k)    = cos(dble(i))+sin(dble(j))+cos(dble(k))
-           a(i,j,k)    = exp(-1.0d0*((i-imax/2)**2+(j-jmax/2)**2+(k-kmax/2)**2)/2/sigma/sigma)/sqrt(2*3.14159d0*sigma) ! exp(-r^2)
-        end do
-     end do
-  end do
+  open(unit=unit_read,file="data_in",form="unformatted",access="stream")
+
+  ! read initial data
+  read(unit_read) a
+  close(unit_read)
 
   k=kmax/2
   do j=1,jmax
@@ -48,8 +66,9 @@ program main
   end do
 
   t0 = dclock()
-  do tstep=1,max_tstep
-     if (mod(tstep,max_tstep/10).eq.0) write(6,*) "tstep:",tstep
+  open(unit=unit_write,file="data_out",form="unformatted",access="stream")
+  do tstep=1,tstep_max
+     if (mod(tstep,tstep_max/10).eq.0) write(6,*) "tstep:",tstep
      b2 = 0.0d0
      !$omp parallel private(i,j,k)
      !$omp do
@@ -93,7 +112,7 @@ program main
      !$omp end do
      !$omp end parallel
      ! exclude t loop
-     do iter=1,max_iter
+     do iter=1,iter_max
         rnew2 = 0.0d0
         r2    = 0.0d0
         pap   = 0.0d0
@@ -153,7 +172,7 @@ program main
               end do
            end do
            exit
-        else if (iter.eq.max_iter.and.eps.ge.tol) then
+        else if (iter.eq.iter_max.and.eps.ge.tol) then
            write(6,*) "did not converge. residual,tol:",eps,tol
            stop
         end if
@@ -163,7 +182,7 @@ program main
            stop
         end if
 
-        ! if (mod(iter,max_iter/(imax+2)/(jmax+2)).eq.0) then
+        ! if (mod(iter,iter_max/(imax+2)/(jmax+2)).eq.0) then
         !    write(6,*) "iter,eps:",iter,eps
         ! end if
         !$omp parallel private(i,j,k)
@@ -198,9 +217,13 @@ program main
            end do
         end do
      end do
+
+     if (mod(tstep,tstep_max/freq_write).eq.0) then
+        write(unit_write) a(1:imax,1:jmax,1:kmax)
+     end if
   end do ! tstep
 
-  write(777) a
+  close(unit_write)
   time = dclock()-t0
   write(6,*) "time[s]:",time
 
@@ -212,5 +235,7 @@ program main
      end do
   end do
 
+  deallocate(a,anew,r,rnew,p,pnew,x,xnew,ax,ap)
+  
   stop
 end program main
