@@ -435,6 +435,7 @@ module mysubs
     end do
 
     ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k (fortran order)
+    !              i+1       i-1       j+1            j-1              k+1                       k-1
     ! coef1*(anew(g+1)+anew(g-1)+anew(g+imax+2)+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
     ! 7-stencil symmetric matrix, CG method can be used
 

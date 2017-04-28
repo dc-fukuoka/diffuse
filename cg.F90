@@ -86,7 +86,6 @@ program main
      ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
      !
 
-     ! boundary value of ax is zero, how to handle it?
      !$omp do
      do k=1,kmax
         do j=1,jmax
@@ -144,6 +143,7 @@ program main
               end do
            end do
         end do
+        !$omp end do
         !     write(6,*) "iter,r2,pap:",iter,r2,pap
         !$omp single
         alpha = r2/pap
