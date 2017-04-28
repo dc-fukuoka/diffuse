@@ -1,6 +1,6 @@
 if (exist("i")==0 || i<0) i=0
 
-print i
+if (i%10==0) print i
 
 set zrange [0:0.16]
 splot "fort.2222" index i ti ""
