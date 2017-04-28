@@ -31,7 +31,7 @@ input file: fort.11
     /
 
 
-how to run:
+how to run:  
     
     $ make  
     $ vi fort.11  
@@ -39,12 +39,15 @@ how to run:
     $ mpirun -np $NP ./diffuse  
     $ ./create_output  
     $ ./create_anime.sh  
-
+  
+performance comparison:  
 cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz  
-problem size: 64x64x64  
-maximum timestep: 100  
-with 1   core: 38.3777060508728 s  
-with 32 cores:  2.2367570400238 s  
+problem size: 128x128x128  
+tstep_max   : 100
+freq_write  :  1 
+with 1   core           : 381.2 s  
+with 32 cores(flat MPI) : 20.2  s  
+with 32 cores(hbyrid)   : 15.8  s
 
 the animation shows that how a gaussian wave decays at k = kmax/2
 ![Alt text](./diffuse.gif?raw=true "diffuse.gif")
