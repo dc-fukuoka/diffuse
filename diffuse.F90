@@ -242,30 +242,43 @@ module mysubs
     integer,intent(in)::comm_cart
     integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
+    integer::i,j,k
 
     !$omp barrier
+    ! need to be a face, not a line
     ! i direction
-    !$omp workshare
-    buf_i(1:jmax_l,1:kmax_l,1) = a_in(1,     1:jmax_l,1:kmax_l) ! send to -i, src_i
-    buf_i(1:jmax_l,1:kmax_l,2) = 0.0d0
-    buf_i(1:jmax_l,1:kmax_l,3) = a_in(imax_l,1:jmax_l,1:kmax_l) ! send to +i, dest_i
-    buf_i(1:jmax_l,1:kmax_l,4) = 0.0d0
-    !$omp end workshare nowait
+    !$omp do
+    do k=1,kmax_l
+       do j=1,jmax_l
+          buf_i(j,k,1) = a_in(1,     j,k) ! send to -i, src_i
+          buf_i(j,k,2) = 0.0d0
+          buf_i(j,k,3) = a_in(imax_l,j,k) ! send to +i, dest_i
+          buf_i(j,k,4) = 0.0d0
+       end do
+    end do
+    !$omp end do
     ! j direction
-    !$omp workshare
-    buf_j(1:imax_l,1:kmax_l,1) = a_in(1:imax_l,1,     1:kmax_l) ! send to -j, src_j
-    buf_j(1:imax_l,1:kmax_l,2) = 0.0d0
-    buf_j(1:imax_l,1:kmax_l,3) = a_in(1:imax_l,jmax_l,1:kmax_l) ! send to +j, dest_j
-    buf_j(1:imax_l,1:kmax_l,4) = 0.0d0
-    !$omp end workshare nowait
+    !$omp do
+    do k=1,kmax_l
+       do i=1,imax_l
+          buf_j(i,k,1) = a_in(i,1,     k) ! send to -j, src_j
+          buf_j(i,k,2) = 0.0d0
+          buf_j(i,k,3) = a_in(i,jmax_l,k) ! send to +j, dest_j
+          buf_j(i,k,4) = 0.0d0
+       end do
+    end do
+    !$omp end do
     ! k direction
-    !$omp workshare
-    buf_k(1:imax_l,1:jmax_l,1) = a_in(1:imax_l,1:jmax_l,1     ) ! send to -k, src_k
-    buf_k(1:imax_l,1:jmax_l,2) = 0.0d0
-    buf_k(1:imax_l,1:jmax_l,3) = a_in(1:imax_l,1:jmax_l,kmax_l) ! send to +k, dest_k
-    buf_k(1:imax_l,1:jmax_l,4) = 0.0d0
-    !$omp end workshare
-
+    !$omp do
+    do j=1,jmax_l
+       do i=1,imax_l
+          buf_k(i,j,1) = a_in(i,j,1     ) ! send to -k, src_k
+          buf_k(i,j,2) = 0.0d0
+          buf_k(i,j,3) = a_in(i,j,kmax_l) ! send to +k, dest_k
+          buf_k(i,j,4) = 0.0d0
+       end do
+    end do
+    !$omp end do
     ! i direction
     !$omp single
     call mpi_isend(buf_i(1,1,1),jmax_l*kmax_l,mpi_real8,src_i, 0,comm_cart,ireqs(1), ierr)
@@ -282,7 +295,7 @@ module mysubs
     call mpi_irecv(buf_k(1,1,2),imax_l*jmax_l,mpi_real8,dest_k,4,comm_cart,ireqs(10),ierr)
     call mpi_isend(buf_k(1,1,3),imax_l*jmax_l,mpi_real8,dest_k,5,comm_cart,ireqs(11),ierr)
     call mpi_irecv(buf_k(1,1,4),imax_l*jmax_l,mpi_real8,src_k, 5,comm_cart,ireqs(12),ierr)
-    !$omp end single nowait
+    !$omp end single
     
     return
   end subroutine isendrecv_halo
@@ -299,6 +312,7 @@ module mysubs
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
     integer,dimension(ndims*4),intent(inout)::ireqs
     integer::istats(mpi_status_size,ndims*4)
+    integer::i,j,k
 
     !$omp barrier
     !$omp single
@@ -307,36 +321,60 @@ module mysubs
 
     ! i direction
     if (if_update_i(1)) then
-       !$omp workshare
-       a_in(imax_l+1,1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,2) ! receive from -i direction i=1      -> imax_l+1
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do k=1,kmax_l
+          do j=1,jmax_l
+             a_in(imax_l+1,j,k) = buf_i(j,k,2) ! receive from -i direction i=1      -> imax_l+1
+          end do
+       end do
+       !$omp end do
     end if
     if (if_update_i(2)) then
-       !$omp workshare
-       a_in(0,       1:jmax_l,1:kmax_l) = buf_i(1:jmax_l,1:kmax_l,4) ! receive from +i direction i=imax_l -> 0
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do k=1,kmax_l
+          do j=1,jmax_l
+             a_in(0,       j,k) = buf_i(j,k,4) ! receive from +i direction i=imax_l -> 0
+          end do
+       end do
+       !$omp end do
     end if
     ! j drection
     if (if_update_j(1)) then
-       !$omp workshare
-       a_in(1:imax_l,jmax_l+1,1:kmax_l) = buf_j(1:imax_l,1:kmax_l,2) ! receive from -j direction j=1      -> jmax_l+1
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do k=1,kmax_l
+          do i=1,imax_l
+             a_in(i,jmax_l+1,k) = buf_j(i,k,2) ! receive from -j direction j=1      -> jmax_l+1
+          end do
+       end do
+       !$omp end do
     end if
     if (if_update_j(2)) then
-       !$omp workshare
-       a_in(1:imax_l,0,       1:kmax_l) = buf_j(1:imax_l,1:kmax_l,4) ! receive from +j direction j=jmax_l -> 0
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do k=1,kmax_l
+          do i=1,imax_l
+             a_in(i,0,       k) = buf_j(i,k,4) ! receive from +j direction j=jmax_l -> 0
+          end do
+       end do
+       !$omp end do
     end if
     ! k direction
     if (if_update_k(1)) then
-       !$omp workshare
-       a_in(1:imax_l,1:jmax_l,kmax_l+1) = buf_k(1:imax_l,1:jmax_l,2) ! receive from -k direction k=1      -> kmax_l+1
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do j=1,jmax_l
+          do i=1,imax_l
+             a_in(i,j,kmax_l+1) = buf_k(i,j,2) ! receive from -k direction k=1      -> kmax_l+1
+          end do
+       end do
+       !$omp end do
     end if
     if (if_update_k(2)) then
-       !$omp workshare
-       a_in(1:imax_l,1:jmax_l,0       ) = buf_k(1:imax_l,1:jmax_l,4) ! receive from +k direction k=kmax_l -> 0
-       !$omp end workshare nowait
+       !$omp do collapse(2)
+       do j=1,jmax_l
+          do i=1,imax_l
+             a_in(i,j,0       ) = buf_k(i,j,4) ! receive from +k direction k=kmax_l -> 0
+          end do
+       end do
+       !$omp end do
     end if
     !$omp barrier
     
@@ -409,13 +447,12 @@ module mysubs
              write(6,*) "tstep:",tstep
           end if
        end if
-       !$omp end single nowait
+       !$omp end single
 #endif
 #ifndef _OVERLAP_MPI
        call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
             src_i,dest_i,src_j,dest_j,src_k,dest_k, &
             comm_cart,ireqs_a_l)
-       !$omp barrier
        call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
             if_update_i,if_update_j,if_update_k,ireqs_a_l)
 #else
@@ -436,7 +473,7 @@ module mysubs
        !$omp single
        b2   = 0.0d0
        b2_l = 0.0d0
-       !$omp end single nowait
+       !$omp end single
        !$omp do reduction(+:b2_l)
        do k=1,kmax_l
           do j=1,jmax_l
@@ -450,7 +487,7 @@ module mysubs
              end do
           end do
        end do
-       !$omp end do nowait
+       !$omp end do
        !$omp end parallel
        call mpi_allreduce(b2_l, b2, 1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 
@@ -469,7 +506,6 @@ module mysubs
           call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                comm_cart,ireqs_p_l)
-          !$omp barrier
           call wait_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                if_update_i,if_update_j,if_update_k,ireqs_p_l)
 #else
@@ -477,7 +513,6 @@ module mysubs
              call isendrecv_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   src_i,dest_i,src_j,dest_j,src_k,dest_k, &
                   comm_cart,ireqs_p_l)
-             !$omp barrier
              call wait_halo(p_l,buf_p_l_i,buf_p_l_j,buf_p_l_k, &
                   if_update_i,if_update_j,if_update_k,ireqs_p_l)
           else
@@ -538,7 +573,7 @@ module mysubs
              end if
           end if
 #endif
-          !$omp end single nowait
+          !$omp end single
           !$omp end parallel
           if (eps.le.tol) then
 #if 0
@@ -593,7 +628,7 @@ module mysubs
                 end do
              end do
           end do
-          !$omp end do nowait
+          !$omp end do
           !$omp end parallel
        end do ! iter
 
@@ -615,14 +650,11 @@ module mysubs
                comm_cart,ireqs_a_l)
        end if
 #endif
-       
+       !$omp end parallel
        if (mod(tstep,tstep_max/freq_write).eq.0) then
           call write_output(a_l,ifiletype_write,fh,count_write)
-          !$omp single
           count_write=count_write+1
-          !$omp end single nowait
        end if
-       !$omp end parallel
     end do ! tstep
 
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
@@ -638,23 +670,23 @@ module mysubs
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(in)::a_l
     real(8),dimension(imax_l,jmax_l,kmax_l)::tmp
     integer,intent(in)::ifiletype_write,fh
-    integer::info
+    integer::info=mpi_info_null
     integer(kind=mpi_offset_kind)::idisp=0, ntimes
     integer::istat(mpi_status_size)
     integer::i,j,k
 
-    !$omp single
     idisp = ntimes*sizeof(a_l(1,1,1))*imax*jmax*kmax
-    !$omp end single
-    !$omp workshare
-    tmp(1:imax_l,1:jmax_l,1:kmax_l) = a_l(1:imax_l,1:jmax_l,1:kmax_l)
-    !$omp end workshare
+    !$omp parallel do private(i,j,k)
+    do k=1,kmax_l
+       do j=1,jmax_l
+          do i=1,imax_l
+             tmp(i,j,k) = a_l(i,j,k)
+          end do
+       end do
+    end do
     ! C-like writing, exclude datasize information
-    !$omp single
-    info = mpi_info_null
     call mpi_file_set_view(fh,idisp,mpi_real8,ifiletype_write,"native",info,ierr)
     call mpi_file_write_all(fh,tmp(1,1,1),imax_l*jmax_l*kmax_l,mpi_real8,istat,ierr)
-    !$omp end single nowait
     
     return
   end subroutine write_output
