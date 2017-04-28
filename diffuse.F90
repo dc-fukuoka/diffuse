@@ -247,7 +247,7 @@ module mysubs
     !$omp barrier
     ! need to be a face, not a line
     ! i direction
-    !$omp do
+    !$omp do collapse(2)
     do k=1,kmax_l
        do j=1,jmax_l
           buf_i(j,k,1) = a_in(1,     j,k) ! send to -i, src_i
@@ -256,9 +256,9 @@ module mysubs
           buf_i(j,k,4) = 0.0d0
        end do
     end do
-    !$omp end do
+    !$omp end do nowait
     ! j direction
-    !$omp do
+    !$omp do collapse(2)
     do k=1,kmax_l
        do i=1,imax_l
           buf_j(i,k,1) = a_in(i,1,     k) ! send to -j, src_j
@@ -267,9 +267,9 @@ module mysubs
           buf_j(i,k,4) = 0.0d0
        end do
     end do
-    !$omp end do
+    !$omp end do nowait
     ! k direction
-    !$omp do
+    !$omp do collapse(2)
     do j=1,jmax_l
        do i=1,imax_l
           buf_k(i,j,1) = a_in(i,j,1     ) ! send to -k, src_k
@@ -327,7 +327,7 @@ module mysubs
              a_in(imax_l+1,j,k) = buf_i(j,k,2) ! receive from -i direction i=1      -> imax_l+1
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     if (if_update_i(2)) then
        !$omp do collapse(2)
@@ -336,7 +336,7 @@ module mysubs
              a_in(0,       j,k) = buf_i(j,k,4) ! receive from +i direction i=imax_l -> 0
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     ! j drection
     if (if_update_j(1)) then
@@ -346,7 +346,7 @@ module mysubs
              a_in(i,jmax_l+1,k) = buf_j(i,k,2) ! receive from -j direction j=1      -> jmax_l+1
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     if (if_update_j(2)) then
        !$omp do collapse(2)
@@ -355,7 +355,7 @@ module mysubs
              a_in(i,0,       k) = buf_j(i,k,4) ! receive from +j direction j=jmax_l -> 0
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     ! k direction
     if (if_update_k(1)) then
@@ -365,7 +365,7 @@ module mysubs
              a_in(i,j,kmax_l+1) = buf_k(i,j,2) ! receive from -k direction k=1      -> kmax_l+1
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     if (if_update_k(2)) then
        !$omp do collapse(2)
@@ -374,7 +374,7 @@ module mysubs
              a_in(i,j,0       ) = buf_k(i,j,4) ! receive from +k direction k=kmax_l -> 0
           end do
        end do
-       !$omp end do
+       !$omp end do nowait
     end if
     !$omp barrier
     
