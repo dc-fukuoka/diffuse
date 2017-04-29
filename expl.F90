@@ -37,6 +37,7 @@ program main
   write(6,"(a,4i5)") "imax,jmax,kmax:",imax,jmax,kmax
   write(6,"(a,2i8)") "iter_max,tstep_max:",iter_max,tstep_max
   write(6,"(a,i4)" ) "freq_write:",freq_write
+  write(6,"(a,1pe14.5)") "3*diff_coef*dt/dx/dx:",3*diff_coef*dt/dx/dx
   b2 = 0.0d0
   a  = 0.0d0
   anew = 0.0d0
