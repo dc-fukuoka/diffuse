@@ -1,7 +1,5 @@
-set term gif animate
-#optimize delay 10 size 480,480
+set term gif animate delay 10
 set output "diffuse.gif"
-
 i=0
 
 load "draw.gp"

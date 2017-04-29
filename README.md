@@ -33,10 +33,10 @@ input file: fort.11
 
 how to run:  
     
-    $ make  
-    $ vi fort.11  
+    $ make # if you have intel compiler and intelmpi, try "make -f makefile.impi.mk"  
+    $ vi fort.11 # adjust the parameters  
     $ ./create_input  
-    $ mpirun -np $NP ./diffuse  
+    $ mpirun -np $NP ./diffuse # or mpirun -np $NP ./diffuse_hyb where $NP = idiv*jdiv*kdiv  
     $ ./create_output  
     $ ./create_anime.sh  
   
@@ -48,6 +48,25 @@ freq_write  :  1
 with 1   core           : 381.2 s  
 with 32 cores(flat MPI) : 20.2  s  
 with 32 cores(hbyrid)   : 15.8  s  
+
+compare the results between implicit method and explicit method
+1.
+    dt        = 1.0d-6  ! stride of time
+    dx        = 1.0d-2  ! stride of x, y, z direction
+    tol       = 1.0d-40 ! convergence tolerance of CG method
+    diff_coef = 1.0d2   ! diffusion coefficient
   
-the animation shows that how a gaussian wave decays at k = kmax/2
-![Alt text](./diffuse.gif?raw=true "diffuse.gif")
+implicit method
+![Alt text](./diffuse.gif?raw=true "gifs/diffuse.2.impl.gif")
+explicit method
+![Alt text](./diffuse.gif?raw=true "gifs/diffuse.2.expl.gif")
+
+2.
+    dt        = 1.0d-6  ! stride of time
+    dx        = 1.0d-3  ! stride of x, y, z direction
+    tol       = 1.0d-40 ! convergence tolerance of CG method
+    diff_coef = 1.0d2   ! diffusion coefficient
+implicit method
+![Alt text](./diffuse.gif?raw=true "gifs/diffuse.1.impl.gif")
+explicit method
+![Alt text](./diffuse.gif?raw=true "gifs/diffuse.1.expl.gif")
