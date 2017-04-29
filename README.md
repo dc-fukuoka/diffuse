@@ -67,7 +67,7 @@ the animation shows that how a gaussian ware decays at k = kmax/2
     freq_write = 100
   
 stability condition of explicit method:  
-3*diff_coef*dt/dx/dx <= 1/2  
+3\*diff_coef\*dt/dx/dx <= 1/2  
 = 3.0  
 this is instable for explicit method.  
     
@@ -89,7 +89,7 @@ the result diverges...
     freq_write = 100
   
 stability condition of explicit method:  
-3*diff_coef*dt/dx/dx <= 1/2  
+3\*diff_coef\*dt/dx/dx <= 1/2  
 = 0.3  
 this is stable for explicit method.  
     
