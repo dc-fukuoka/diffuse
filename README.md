@@ -49,7 +49,7 @@ freq_write  :  1
   
 with 1   core           : 381.2 s  
 with 32 cores(flat MPI) : 20.2  s  
-with 32 cores(hbyrid)   : 15.8  s  
+with 32 cores(hybrid)   : 15.8  s  
 
 compare the results between implicit method(CG method) and explict method
 ===============	  
