@@ -50,23 +50,27 @@ with 32 cores(flat MPI) : 20.2  s
 with 32 cores(hbyrid)   : 15.8  s  
 
 compare the results between implicit method and explicit method
-1.
+1.  
     dt        = 1.0d-6  ! stride of time
     dx        = 1.0d-2  ! stride of x, y, z direction
     tol       = 1.0d-40 ! convergence tolerance of CG method
     diff_coef = 1.0d2   ! diffusion coefficient
-  
-implicit method
+
+
+implicit method  
 ![Alt text](gifs/diffuse.1.impl.gif?raw=true "implicit method 1")
-explicit method
+explicit method  
 ![Alt text](gifs/diffuse.1.expl.gif?raw=true "explicit method 1")
 
-2.
+
+2.  
     dt        = 1.0d-6  ! stride of time
     dx        = 1.0d-3  ! stride of x, y, z direction
     tol       = 1.0d-40 ! convergence tolerance of CG method
     diff_coef = 1.0d2   ! diffusion coefficient
-implicit method
+
+
+implicit method  
 ![Alt text](gifs/diffuse.2.impl.gif?raw=true "implicit method 2")
-explicit method
+explicit method  
 ![Alt text](gifs/diffuse.2.expl.gif?raw=true "explicit method 2")
