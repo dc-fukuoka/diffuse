@@ -45,7 +45,8 @@ performance comparison
 cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz  
 problem size: 128x128x128  
 tstep_max   : 100  
-freq_write  :  1  
+freq_write  :  1
+  
 with 1   core           : 381.2 s  
 with 32 cores(flat MPI) : 20.2  s  
 with 32 cores(hbyrid)   : 15.8  s  
