@@ -56,17 +56,38 @@ compare the results between implicit method(CG method) and explict method
 
 compare the results between implicit method and explicit method.
 explicit method program is expl.F90.  
-the animation shows that how a gaussian ware decays at k = kmax/2  
+the animation shows that how a gaussian ware decays at k = kmax/2
+# 1.
 
-    dt        = 1.0d-6  ! stride of time
-    dx        = 1.0d-2  ! stride of x, y, z direction
-    tol       = 1.0d-40 ! convergence tolerance of CG method
-    diff_coef = 1.0d2   ! diffusion coefficient
-
+    dt        = 1.0d-6
+    dx        = 1.0d-2
+    tol       = 1.0d-40
+    diff_coef = 1.0d2
+    tstep_max  = 100
+    freq_write = 100
+    
+    
 # implicit method
-`$ eog gifs/diffuse.impl.gif`  
-![Alt text](gifs/diffuse.impl.gif?raw=true "implicit method")
+`$ eog gifs/diffuse.impl.1.gif`  
+![Alt text](gifs/diffuse.impl.1.gif?raw=true "implicit method 1")
 # explicit method
 the result diverges...  
-`$ eog gifs/diffuse.expl.gif`  
-![Alt text](gifs/diffuse.expl.gif?raw=true "explicit method")
+`$ eog gifs/diffuse.expl.1.gif`  
+![Alt text](gifs/diffuse.expl.1.gif?raw=true "explicit method 1")
+
+# 2.
+
+    dt        = 1.0d-7
+    dx        = 1.0d-2
+    tol       = 1.0d-40
+    diff_coef = 1.0d2
+    tstep_max  = 1000
+    freq_write = 100
+    
+# implicit method
+`$ eog gifs/diffuse.impl.2.gif`  
+![Alt text](gifs/diffuse.impl.2.gif?raw=true "implicit method 2")
+# explicit method
+in this case, explicit method is enough.  
+`$ eog gifs/diffuse.expl/2.gif`  
+![Alt text](gifs/diffuse.expl.2.gif?raw=true "explicit method 2")
