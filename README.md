@@ -52,6 +52,7 @@ with 32 cores(hbyrid)   : 15.8  s
 ===============	  
 
 compare the results between implicit method and explicit method  
+the animation shows that how a gaussian ware decays at k = kmax/2  
 # 1.
 
     dt        = 1.0d-6  ! stride of time
