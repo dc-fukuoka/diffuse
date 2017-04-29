@@ -80,5 +80,6 @@ the animation shows that how a gaussian ware decays at k = kmax/2
 `$ eog gifs/diffuse.2.impl.gif`
 ![Alt text](gifs/diffuse.2.impl.gif?raw=true "implicit method 2")
 ## explicit method
+this is a bad condition, the result of explicit method diverges...  
 `$ eog gifs/diffuse.2.expl.gif`
 ![Alt text](gifs/diffuse.2.expl.gif?raw=true "explicit method 2")
