@@ -64,9 +64,9 @@ the animation shows that how a gaussian ware decays at k = kmax/2
     diff_coef = 1.0d2   ! diffusion coefficient
 
 # implicit method
-`$ eog gifs/diffuse.impl.gif`
+`$ eog gifs/diffuse.impl.gif`  
 ![Alt text](gifs/diffuse.impl.gif?raw=true "implicit method")
 # explicit method
 the result diverges...  
-`$ eog gifs/diffuse.expl.gif`
+`$ eog gifs/diffuse.expl.gif`  
 ![Alt text](gifs/diffuse.expl.gif?raw=true "explicit method")
