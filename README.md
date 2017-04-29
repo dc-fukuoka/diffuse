@@ -75,7 +75,7 @@ this is instable for explicit method.
 `$ eog gifs/diffuse.impl.1.gif`  
 ![Alt text](gifs/diffuse.impl.1.gif?raw=true "implicit method 1")
 # explicit method
-the result diverges...  
+the result diverges due to the instability...  
 `$ eog gifs/diffuse.expl.1.gif`  
 ![Alt text](gifs/diffuse.expl.1.gif?raw=true "explicit method 1")
 
