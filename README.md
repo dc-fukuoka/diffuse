@@ -65,7 +65,7 @@ the animation shows that how a gaussian ware decays at k = kmax/2
     diff_coef = 1.0d2
     tstep_max  = 100
     freq_write = 100
-
+  
 stability condition of explicit method:  
 3*diff_coef*dt/dx/dx <= 1/2  
 = 3.0  
@@ -87,7 +87,7 @@ the result diverges...
     diff_coef = 1.0d2
     tstep_max  = 1000
     freq_write = 100
-
+  
 stability condition of explicit method:  
 3*diff_coef*dt/dx/dx <= 1/2  
 = 0.3  
