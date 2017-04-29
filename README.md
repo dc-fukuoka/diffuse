@@ -76,8 +76,8 @@ compare the results between implicit method and explicit method
 
 
 ## implicit method
-![Alt text](gifs/diffuse.2.impl.gif?raw=true "implicit method 2")
 `$ eog gifs/diffuse.2.impl.gif`
+![Alt text](gifs/diffuse.2.impl.gif?raw=true "implicit method 2")
 ## explicit method
 `$ eog gifs/diffuse.2.expl.gif`
 ![Alt text](gifs/diffuse.2.expl.gif?raw=true "explicit method 2")
