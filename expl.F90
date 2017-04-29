@@ -38,6 +38,8 @@ program main
   write(6,"(a,2i8)") "iter_max,tstep_max:",iter_max,tstep_max
   write(6,"(a,i4)" ) "freq_write:",freq_write
   b2 = 0.0d0
+  a  = 0.0d0
+  anew = 0.0d0
 
   coef1 = -1.0d0*dt/dx/dx*diff_coef
   coef2  = 1.0d0+6.0d0*dt/dx/dx*diff_coef

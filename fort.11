@@ -1,5 +1,5 @@
 &param0
-dt        = 1.0d-6  ! stride of time
+dt        = 1.1d-6  ! stride of time
 dx        = 1.0d-2  ! stride of x, y, z direction
 tol       = 1.0d-40 ! convergence tolerance of CG method
 diff_coef = 1.0d2   ! diffusion coefficient
