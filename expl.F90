@@ -41,8 +41,8 @@ program main
   a  = 0.0d0
   anew = 0.0d0
 
-  coef1 = -1.0d0*dt/dx/dx*diff_coef
-  coef2  = 1.0d0+6.0d0*dt/dx/dx*diff_coef
+  coef1 = dt/dx/dx*diff_coef
+  coef2  = 1.0d0-6.0d0*dt/dx/dx*diff_coef
 
   open(unit=unit_read,file="data_in",form="unformatted",access="stream")
 
