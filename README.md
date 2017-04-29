@@ -40,7 +40,8 @@ how to run:
     $ ./create_output  
     $ ./create_anime.sh  
   
-performance comparison:  
+performance comparison
+===============	  
 cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz  
 problem size: 128x128x128  
 tstep_max   : 100  
