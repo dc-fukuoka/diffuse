@@ -98,5 +98,5 @@ this is stable for explicit method.
 ![Alt text](gifs/diffuse.impl.2.gif?raw=true "implicit method 2")
 # explicit method
 this is stable condition, in this case, explicit method is enough.  
-`$ eog gifs/diffuse.expl/2.gif`  
+`$ eog gifs/diffuse.expl.2.gif`  
 ![Alt text](gifs/diffuse.expl.2.gif?raw=true "explicit method 2")
