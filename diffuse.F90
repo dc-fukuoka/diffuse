@@ -536,7 +536,7 @@ module mysubs
           !$omp single
           call mpi_allreduce(r2_l, r2, 1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
           call mpi_allreduce(pap_l,pap,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-#if 0
+#ifdef _DEBUG
           if (iam.eq.0) then
              if (iter.eq.1) then
                 write(6,*) "coef1,coef2:",coef1,coef2
@@ -565,7 +565,7 @@ module mysubs
           call mpi_allreduce(rnew2_l,rnew2,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 
           eps = sqrt(rnew2)/sqrt(b2)
-#if 0
+#ifdef _DEBUG
           if (iam.eq.0) then
              if (mod(iter,imax_l*jmax_l).eq.0) then
                 write(6,*) "rnew2_l,rnew2:",rnew2_l,rnew2
@@ -576,7 +576,7 @@ module mysubs
           !$omp end single
           !$omp end parallel
           if (eps.le.tol) then
-#if 0
+#ifdef _DEBUG
              if (iam.eq.0) then
                 write(6,*) "the result converged."
                 write(6,"(a,i5,2(1pe14.5))") "iter,residual,tol:",iter,eps,tol
