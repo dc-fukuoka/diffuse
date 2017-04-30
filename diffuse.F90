@@ -381,14 +381,13 @@ module mysubs
     return
   end subroutine wait_halo
 
-  subroutine diffuse(a_l,anew_l,ifiletype_read, &
+  subroutine diffuse(a_l,anew_l, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k,comm_cart, &
        ifiletype_write,fh)
     use params
     implicit none
     real(8),dimension(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),intent(inout)::a_l,anew_l
-    integer,intent(in)::ifiletype_read
     integer,intent(in)::src_i,dest_i,src_j,dest_j,src_k,dest_k
     logical,dimension(2),intent(in)::if_update_i,if_update_j,if_update_k
     integer,intent(in)::comm_cart
@@ -714,7 +713,7 @@ program main
   call read_initial_data(a_l,ifiletype_read)
   call mpi_barrier(mpi_comm_world,ierr)
   t0 = mpi_wtime()
-  call diffuse(a_l,anew_l,ifiletype_read, &
+  call diffuse(a_l,anew_l, &
        src_i,dest_i,src_j,dest_j,src_k,dest_k, &
        if_update_i,if_update_j,if_update_k,comm_cart,ifiletype_write,fh)
   call mpi_barrier(mpi_comm_world,ierr)
