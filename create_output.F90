@@ -40,7 +40,10 @@ program main
      end do
   end do
 
+#ifdef _DEBUG
   write(9999) a
+#endif
+
   close(unit_read)
   deallocate(a)
   stop

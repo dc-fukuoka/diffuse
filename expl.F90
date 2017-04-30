@@ -51,6 +51,7 @@ program main
   read(unit_read) a
   close(unit_read)
 
+#ifdef _DEBUG
   k=kmax/2
   do j=1,jmax
      do i=1,imax
@@ -58,6 +59,7 @@ program main
         if (i.eq.imax+1) write(599,*)
      end do
   end do
+#endif
 
   t0 = dclock()
   open(unit=unit_write,file="data_out",form="unformatted",access="stream")
@@ -96,6 +98,7 @@ program main
   time = dclock()-t0
   write(6,*) "time[s]:",time
 
+#ifdef _DEBUG
   k=kmax/2
   do j=1,jmax
      do i=1,imax
@@ -103,6 +106,7 @@ program main
         if (i.eq.imax+1) write(600,*)
      end do
   end do
+#endif
 
   deallocate(a,anew)
   

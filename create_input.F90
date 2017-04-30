@@ -27,7 +27,8 @@ program main
      end do
   end do
   write(unit) a
-#if 0
+
+#ifdef _DEBUG
   rewind(unit)
   do k=0,kmax+1
      do j=0,jmax+1
@@ -42,7 +43,6 @@ program main
         end do
      end do
   end do
-#endif
   k=kmax/2
   do j=1,jmax
      do i=1,imax
@@ -50,6 +50,8 @@ program main
         if (i.eq.imax+1) write(100,*)
      end do
   end do
+#endif
+
   close(unit)
   deallocate(a,b)
   stop
