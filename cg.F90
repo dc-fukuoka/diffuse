@@ -1,4 +1,6 @@
 ! ref: http://ushiro.jp/program/iter/cgsym.htm
+! Crank-Nicolson method
+! time direction second order accuracy
 module params
   implicit none
   real(8)::dt,dx,tol
@@ -23,9 +25,12 @@ program main
   real(8)::r2,rnew2,pap,b2,eps
   real(8)::t=0.0d0
   real(8)::dclock,t0,time
-  real(8)::sevenstencil
   integer::i,j,k,iter,tstep
-
+#ifdef _CR
+  real(8),allocatable,dimension(:,:,:)::ba
+  real(8)::coef3,coef4
+#endif
+  
   read(11,param0)
   read(11,param1)
   read(11,param3)
@@ -40,7 +45,9 @@ program main
   allocate(xnew(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(ax(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(ap(0:imax+1,0:jmax+1,0:kmax+1))
-  
+#ifdef _CR
+  allocate(ba(0:imax+1,0:jmax+1,0:kmax+1))
+#endif
   
   write(6,"(a,4(1pe14.5))") "dt,dx,tol,diff_coef:",dt,dx,tol,diff_coef
   write(6,"(a,4i5)") "imax,jmax,kmax:",imax,jmax,kmax
@@ -49,7 +56,12 @@ program main
   b2 = 0.0d0
 
   coef1 = -1.0d0*dt/dx/dx*diff_coef
-  coef2  = 1.0d0+6.0d0*dt/dx/dx*diff_coef
+  coef2 = 1.0d0+6.0d0*dt/dx/dx*diff_coef
+#ifdef _CR
+  coef3 = -1.0d0*coef1
+  coef4 = 1.0d0-6.0d0*dt/dx/dx*diff_coef
+  write(6,*) "using Crank-Nicolson method"
+#endif
 
   open(unit=unit_read,file="data_in",form="unformatted",access="stream")
 
@@ -71,13 +83,31 @@ program main
   open(unit=unit_write,file="data_out",form="unformatted",access="stream")
   do tstep=1,tstep_max
      if (mod(tstep,tstep_max/10).eq.0) write(6,*) "tstep:",tstep
+#ifdef _CR
+     ! A*anew = B*a
+     ! calculate B*a
+     do k=1,kmax
+        do j=1,jmax
+           do i=1,imax
+              ba(i,j,k) = coef3*(a(i+1,j,  k  )+a(i-1,j,  k  )  &
+                                +a(i,  j+1,k  )+a(i,  j-1,k  )  &
+                                +a(i,  j,  k+1)+a(i,  j,  k-1)) &
+                          +coef4*a(i,  j,  k  )
+           end do
+        end do
+     end do
+#endif
      b2 = 0.0d0
      !$omp parallel private(i,j,k)
      !$omp do
      do k=0,kmax+1
         do j=0,jmax+1
            do i=0,imax+1
+#ifdef _CR
+              x(i,j,k) = ba(i,j,k) ! initial guess
+#else
               x(i,j,k) = a(i,j,k) ! initial guess
+#endif
            end do
         end do
      end do
@@ -85,7 +115,7 @@ program main
 
      ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k
      !             i+1       i-1       j+1              j-1              k+1                       k-1
-     ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
+     ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = ba(g)
      !
 
      !$omp do
@@ -104,9 +134,14 @@ program main
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
+#ifdef _CR
+              r(i,j,k) = ba(i,j,k)-ax(i,j,k)
+              b2       = b2 + ba(i,j,k)*ba(i,j,k)
+#else
               r(i,j,k) = a(i,j,k)-ax(i,j,k)
-              p(i,j,k) = r(i,j,k)
               b2       = b2 + a(i,j,k)*a(i,j,k)
+#endif
+              p(i,j,k) = r(i,j,k)
            end do
         end do
      end do
@@ -240,6 +275,9 @@ program main
 #endif
 
   deallocate(a,anew,r,rnew,p,pnew,x,xnew,ax,ap)
+#ifdef _CR
+  deallocate(ba)
+#endif
   
   stop
 end program main
