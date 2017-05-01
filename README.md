@@ -1,4 +1,4 @@
-*diffuse* - 3D diffusion equation solver by using CG method(no precondition) with MPI.
+*diffuse* - 3D diffusion equation solver by using CG method(no precondition) + Crank-Nicolson method with MPI.
 ===============	  
 the result was compared to serial version(cg.F90)  
   
@@ -33,7 +33,7 @@ input file: fort.11
 
 how to run:  
     
-    $ make # if you have intel compiler and intelmpi, try "make -f makefile.impi.mk" and if you want to enable Crank-Nicolson method, try to add -D_CN in the makefile
+    $ make # if you have intel compiler and intelmpi, try "make -f makefile.impi.mk" and if you want to disable Crank-Nicolson method, try to remove -D_CN from the makefile
     $ vi fort.11 # adjust the parameters  
     $ ./create_input  
     $ mpirun -np $NP ./diffuse # or mpirun -np $NP ./diffuse_hyb where $NP = idiv*jdiv*kdiv  

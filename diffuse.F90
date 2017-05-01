@@ -478,7 +478,21 @@ module mysubs
        !$omp end single
 #endif
 
+#ifndef _OVERLAP_MPI
+       call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+            comm_cart,ireqs_a_l)
+       call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+            if_update_i,if_update_j,if_update_k,ireqs_a_l)
+#else
+       if (tstep.ne.1) then
+          call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
+               if_update_i,if_update_j,if_update_k,ireqs_a_l)
+       endif
+#endif
 #ifdef _CN
+       ! A*anew = B*a
+       ! calculate B*a
        !$omp do
        do k=1,kmax_l
           do j=1,jmax_l
@@ -497,18 +511,7 @@ module mysubs
        call wait_halo(ba_l,buf_ba_l_i,buf_ba_l_j,buf_ba_l_k, &
             if_update_i,if_update_j,if_update_k,ireqs_ba_l)
 #endif
-#ifndef _OVERLAP_MPI
-       call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
-            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
-            comm_cart,ireqs_a_l)
-       call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
-            if_update_i,if_update_j,if_update_k,ireqs_a_l)
-#else
-       if (tstep.ne.1) then
-          call wait_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
-               if_update_i,if_update_j,if_update_k,ireqs_a_l)
-       endif
-#endif
+
        !$omp do
        do k=0,kmax_l+1
           do j=0,jmax_l+1

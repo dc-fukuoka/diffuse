@@ -20,7 +20,7 @@ program main
   namelist /param0/dt,dx,tol,diff_coef
   namelist /param1/imax,jmax,kmax
   namelist /param3/iter_max,tstep_max,freq_write
-  real(8),allocatable,dimension(:,:,:)::a,anew,r,rnew,p,pnew,x,xnew,ax,ap
+  real(8),allocatable,dimension(:,:,:)::a,anew,r,rnew,p,pnew,x,xnew,ap
   real(8)::alpha,beta,coef1,coef2
   real(8)::r2,rnew2,pap,b2,eps
   real(8)::t=0.0d0
@@ -43,7 +43,6 @@ program main
   allocate(pnew(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(x(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(xnew(0:imax+1,0:jmax+1,0:kmax+1))
-  allocate(ax(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(ap(0:imax+1,0:jmax+1,0:kmax+1))
 #ifdef _CN
   allocate(ba(0:imax+1,0:jmax+1,0:kmax+1))
@@ -126,27 +125,21 @@ program main
      ! ba(g) = coef3*(a(g+1)+a(g-1)+a(g+(imax+2))+a(g-(imax+2))+a(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef4*a(g)
      !
 
-     !$omp do
-     do k=1,kmax
-        do j=1,jmax
-           do i=1,imax
-              ax(i,j,k) = coef1*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
-                                +x(i,  j+1,k  )+x(i,  j-1,k  )  &
-                                +x(i,  j,  k+1)+x(i,  j,  k-1)) &
-                          +coef2*x(i,  j,  k  )
-           end do
-        end do
-     end do
-     !$omp end do
      !$omp do reduction(+:b2)
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
 #ifdef _CN
-              r(i,j,k) = ba(i,j,k)-ax(i,j,k)
+              r(i,j,k) = ba(i,j,k)-(coef1*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
+                                          +x(i,  j+1,k  )+x(i,  j-1,k  )  &
+                                          +x(i,  j,  k+1)+x(i,  j,  k-1)) &
+                                    +coef2*x(i,  j,  k  ))
               b2       = b2 + ba(i,j,k)*ba(i,j,k)
 #else
-              r(i,j,k) = a(i,j,k)-ax(i,j,k)
+              r(i,j,k) = a(i,j,k)-(coef1*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
+                                         +x(i,  j+1,k  )+x(i,  j-1,k  )  &
+                                         +x(i,  j,  k+1)+x(i,  j,  k-1)) &
+                                   +coef2*x(i,  j,  k  ))
               b2       = b2 + a(i,j,k)*a(i,j,k)
 #endif
               p(i,j,k) = r(i,j,k)
@@ -282,7 +275,7 @@ program main
   end do
 #endif
 
-  deallocate(a,anew,r,rnew,p,pnew,x,xnew,ax,ap)
+  deallocate(a,anew,r,rnew,p,pnew,x,xnew,ap)
 #ifdef _CN
   deallocate(ba)
 #endif
