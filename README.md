@@ -43,7 +43,7 @@ how to run:
 performance comparison
 ===============	  
 cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz  
-problem size: 128x128x128
+problem size: 128x128x128  
 tstep_max   : 100  
 freq_write  : 100  
   
