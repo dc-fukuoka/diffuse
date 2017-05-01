@@ -48,8 +48,8 @@ tstep_max   : 100
 freq_write  : 100  
   
 with 1   core           : 239.6 s  
-with 32 cores(flat MPI) : 17.6  s(idiv,jdiv,kdiv:2,4,4)  
-with 32 cores(hybrid)   : 14.4  s(idiv,jdiv,kdiv:1,2,2)  
+with 32 cores(flat MPI) : 17.6  s(division:2x4x4)  
+with 32 cores(hybrid)   : 14.4  s(division:1x2x2)  
 
 compare the results between implicit method(CG method) and explict method
 ===============	  
