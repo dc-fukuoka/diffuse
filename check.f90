@@ -32,6 +32,8 @@ program main
               diff = abs((b(i,j,k,l)-a(i,j,k,l))/a(i,j,k,l))
               if (diff.ge.tol) then
                  write(6,*) "i,j,k,l:",i,j,k,l
+                 write(6,*) "a:",a(i,j,k,l)
+                 write(6,*) "b:",b(i,j,k,l)
                  write(6,*) "diff:", diff
                  stop
               end if

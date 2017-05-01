@@ -56,9 +56,7 @@ program main
   b2 = 0.0d0
 
 #ifdef _CR
-  ! A*anew = B*a
-  ! coef1, coef2: for left hand side
-  ! coef3, coef4: for right hand side
+  ! 1/2 factor is needed for Crank-Nicolson method
   coef1 = -0.5d0*dt/dx/dx*diff_coef
   coef2 = 1.0d0+6.0d0/2*dt/dx/dx*diff_coef
   coef3 = -1.0d0*coef1
@@ -121,7 +119,11 @@ program main
 
      ! g = i+(imax+2)*j+(imax+2)*(jmax+2)*k
      !             i+1       i-1       j+1              j-1              k+1                       k-1
+     ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
+     !
+     ! Crank-Nicolson method:
      ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = ba(g)
+     ! ba(g) = coef3*(a(g+1)+a(g-1)+a(g+(imax+2))+a(g-(imax+2))+a(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef4*a(g)
      !
 
      !$omp do

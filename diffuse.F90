@@ -402,6 +402,13 @@ module mysubs
     integer::i,j,k,tstep,iter
     integer(kind=mpi_offset_kind)::count_write=0
     integer,dimension(ndims*4)::ireqs_a_l,ireqs_p_l
+#ifdef _CR
+    real(8),dimension(:,:,:),allocatable::ba_l
+    real(8),dimension(:,:,:),allocatable::buf_ba_l_i,buf_ba_l_j,buf_ba_l_k
+    integer,dimension(ndims*4)::ireqs_ba_l
+    real(8)::coef3,coef4
+#endif
+    
 
     ! temporary buffer for halo exchange
     ! for a_l
@@ -415,9 +422,22 @@ module mysubs
     allocate(r_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),rnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(p_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),pnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(x_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),xnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
-
+#ifdef _CR
+    allocate(ba_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
+    ! for ba_l
+    allocate(buf_ba_l_i(jmax_l,kmax_l,4)) ! j-k plane
+    allocate(buf_ba_l_j(imax_l,kmax_l,4)) ! i-k plane
+    allocate(buf_ba_l_k(imax_l,jmax_l,4)) ! i-j plane
+    ! 1/2 factor is needed for Crank-Nicolson method
+    coef1 = -1.0d0/2*dt/dx/dx*diff_coef
+    coef2 =  1.0d0+6.0d0/2*dt/dx/dx*diff_coef
+    coef3 = -1.0d0*coef1
+    coef4 =  1.0d0-6.0d0/2*dt/dx/dx*diff_coef
+    if (iam.eq.0) write(6,*) "using Crank-Nicolson method"
+#else
     coef1 = -1.0d0*dt/dx/dx*diff_coef
     coef2 =  1.0d0+6.0d0*dt/dx/dx*diff_coef
+#endif
 
     !$omp parallel do private(i,j,k)
     do k=0,kmax_l+1
@@ -429,6 +449,9 @@ module mysubs
              pnew_l(i,j,k) = 0.0d0
              x_l(i,j,k)    = 0.0d0
              xnew_l(i,j,k) = 0.0d0
+#ifdef _CR
+             ba_l(i,j,k)   = 0.0d0
+#endif
           end do
        end do
     end do
@@ -437,6 +460,11 @@ module mysubs
     !              i+1       i-1       j+1            j-1              k+1                       k-1
     ! coef1*(anew(g+1)+anew(g-1)+anew(g+imax+2)+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = a(g)
     ! 7-stencil symmetric matrix, CG method can be used
+    !
+    ! Crank-Nicolson method:
+    ! A*anew = B*a
+    ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = ba(g)
+    ! ba(g) = coef3*(a(g+1)+a(g-1)+a(g+(imax+2))+a(g-(imax+2))+a(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef4*a(g)
 
     do tstep=1,tstep_max ! time step
        !$omp parallel private(i,j,k)
@@ -448,6 +476,26 @@ module mysubs
           end if
        end if
        !$omp end single
+#endif
+
+#ifdef _CR
+       !$omp do
+       do k=1,kmax_l
+          do j=1,jmax_l
+             do i=1,imax_l
+                ba_l(i,j,k) = coef3*(a_l(i+1,j,  k  )+a_l(i-1,j,  k  )  &
+                                    +a_l(i,  j+1,k  )+a_l(i,  j-1,k  )  &
+                                    +a_l(i,  j,  k+1)+a_l(i,  j,  k-1)) &
+                              +coef4*a_l(i,  j,  k  )
+             end do
+          end do
+       end do
+       !$omp end do
+       call isendrecv_halo(ba_l,buf_ba_l_i,buf_ba_l_j,buf_ba_l_k, &
+            src_i,dest_i,src_j,dest_j,src_k,dest_k, &
+            comm_cart,ireqs_ba_l)
+       call wait_halo(ba_l,buf_ba_l_i,buf_ba_l_j,buf_ba_l_k, &
+            if_update_i,if_update_j,if_update_k,ireqs_ba_l)
 #endif
 #ifndef _OVERLAP_MPI
        call isendrecv_halo(a_l,buf_a_l_i,buf_a_l_j,buf_a_l_k, &
@@ -465,7 +513,11 @@ module mysubs
        do k=0,kmax_l+1
           do j=0,jmax_l+1
              do i=0,imax_l+1
-                x_l(i,j,k) = a_l(i,j,k) ! initial guess
+#ifdef _CR
+                x_l(i,j,k) = ba_l(i,j,k) ! initial guess
+#else
+                x_l(i,j,k) = a_l(i,j,k)  ! initial guess
+#endif
              end do
           end do
        end do
@@ -478,12 +530,20 @@ module mysubs
        do k=1,kmax_l
           do j=1,jmax_l
              do i=1,imax_l
+#ifdef _CR
+                r_l(i,j,k) = ba_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
+                                                +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
+                                                +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
+                                          +coef2*x_l(i,  j,  k  ))
+                b2_l       = b2_l+ba_l(i,j,k)*ba_l(i,j,k)
+#else
                 r_l(i,j,k) = a_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
                                                +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
                                                +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
                                          +coef2*x_l(i,  j,  k  ))
-                p_l(i,j,k) = r_l(i,j,k)
                 b2_l       = b2_l+a_l(i,j,k)*a_l(i,j,k)
+#endif
+                p_l(i,j,k) = r_l(i,j,k)
              end do
           end do
        end do
@@ -660,6 +720,10 @@ module mysubs
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
     deallocate(buf_a_l_i,buf_a_l_j,buf_a_l_k)
     deallocate(buf_p_l_i,buf_p_l_j,buf_p_l_k)
+#ifdef _CR
+    deallocate(ba_l)
+    deallocate(buf_ba_l_i,buf_ba_l_j,buf_ba_l_k)
+#endif
 
     return
   end subroutine diffuse
