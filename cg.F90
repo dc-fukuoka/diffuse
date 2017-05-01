@@ -55,12 +55,18 @@ program main
   write(6,"(a,i4)" ) "freq_write:",freq_write
   b2 = 0.0d0
 
+#ifdef _CR
+  ! A*anew = B*a
+  ! coef1, coef2: for left hand side
+  ! coef3, coef4: for right hand side
+  coef1 = -0.5d0*dt/dx/dx*diff_coef
+  coef2 = 1.0d0+6.0d0/2*dt/dx/dx*diff_coef
+  coef3 = -1.0d0*coef1
+  coef4 = 1.0d0-6.0d0/2*dt/dx/dx*diff_coef
+  write(6,*) "using Crank-Nicolson method"
+#else
   coef1 = -1.0d0*dt/dx/dx*diff_coef
   coef2 = 1.0d0+6.0d0*dt/dx/dx*diff_coef
-#ifdef _CR
-  coef3 = -1.0d0*coef1
-  coef4 = 1.0d0-6.0d0*dt/dx/dx*diff_coef
-  write(6,*) "using Crank-Nicolson method"
 #endif
 
   open(unit=unit_read,file="data_in",form="unformatted",access="stream")

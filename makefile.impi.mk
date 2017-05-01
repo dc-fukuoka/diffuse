@@ -16,4 +16,4 @@ diffuse: diffuse.F90
 diffuse_hyb: diffuse.F90
 	$(mpifc) $(fppflags) $(openmp) $(fflags) $^ -o $@
 clean:
-	rm -f create_input create_output diffuse diffuse_hyb *.mod *~ core.* data_in data_out fort.100 fort.599 fort.600 fort.777 fort.2222 fort.9999
+	rm -f create_input create_output diffuse diffuse_hyb diffuse.gif *.mod *~ core.* data_in data_out fort.100 fort.599 fort.600 fort.777 fort.2222 fort.9999
