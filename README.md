@@ -33,7 +33,7 @@ input file: fort.11
 
 how to run:  
     
-    $ make # if you have intel compiler and intelmpi, try "make -f makefile.impi.mk"
+    $ make # if you have intel compiler and intelmpi, try "make -f makefile.impi.mk" and if you want to enable Crank-Nicolson method, try to add -D_CN in the makefile
     $ vi fort.11 # adjust the parameters  
     $ ./create_input  
     $ mpirun -np $NP ./diffuse # or mpirun -np $NP ./diffuse_hyb where $NP = idiv*jdiv*kdiv  

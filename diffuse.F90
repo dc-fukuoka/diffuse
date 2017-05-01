@@ -402,7 +402,7 @@ module mysubs
     integer::i,j,k,tstep,iter
     integer(kind=mpi_offset_kind)::count_write=0
     integer,dimension(ndims*4)::ireqs_a_l,ireqs_p_l
-#ifdef _CR
+#ifdef _CN
     real(8),dimension(:,:,:),allocatable::ba_l
     real(8),dimension(:,:,:),allocatable::buf_ba_l_i,buf_ba_l_j,buf_ba_l_k
     integer,dimension(ndims*4)::ireqs_ba_l
@@ -422,7 +422,7 @@ module mysubs
     allocate(r_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),rnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(p_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),pnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     allocate(x_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1),xnew_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
-#ifdef _CR
+#ifdef _CN
     allocate(ba_l(0:imax_l+1,0:jmax_l+1,0:kmax_l+1))
     ! for ba_l
     allocate(buf_ba_l_i(jmax_l,kmax_l,4)) ! j-k plane
@@ -449,7 +449,7 @@ module mysubs
              pnew_l(i,j,k) = 0.0d0
              x_l(i,j,k)    = 0.0d0
              xnew_l(i,j,k) = 0.0d0
-#ifdef _CR
+#ifdef _CN
              ba_l(i,j,k)   = 0.0d0
 #endif
           end do
@@ -478,7 +478,7 @@ module mysubs
        !$omp end single
 #endif
 
-#ifdef _CR
+#ifdef _CN
        !$omp do
        do k=1,kmax_l
           do j=1,jmax_l
@@ -513,7 +513,7 @@ module mysubs
        do k=0,kmax_l+1
           do j=0,jmax_l+1
              do i=0,imax_l+1
-#ifdef _CR
+#ifdef _CN
                 x_l(i,j,k) = ba_l(i,j,k) ! initial guess
 #else
                 x_l(i,j,k) = a_l(i,j,k)  ! initial guess
@@ -530,7 +530,7 @@ module mysubs
        do k=1,kmax_l
           do j=1,jmax_l
              do i=1,imax_l
-#ifdef _CR
+#ifdef _CN
                 r_l(i,j,k) = ba_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
                                                 +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
                                                 +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
@@ -720,7 +720,7 @@ module mysubs
     deallocate(r_l,rnew_l,p_l,pnew_l,x_l,xnew_l)
     deallocate(buf_a_l_i,buf_a_l_j,buf_a_l_k)
     deallocate(buf_p_l_i,buf_p_l_j,buf_p_l_k)
-#ifdef _CR
+#ifdef _CN
     deallocate(ba_l)
     deallocate(buf_ba_l_i,buf_ba_l_j,buf_ba_l_k)
 #endif

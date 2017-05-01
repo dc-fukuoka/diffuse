@@ -26,7 +26,7 @@ program main
   real(8)::t=0.0d0
   real(8)::dclock,t0,time
   integer::i,j,k,iter,tstep
-#ifdef _CR
+#ifdef _CN
   real(8),allocatable,dimension(:,:,:)::ba
   real(8)::coef3,coef4
 #endif
@@ -45,7 +45,7 @@ program main
   allocate(xnew(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(ax(0:imax+1,0:jmax+1,0:kmax+1))
   allocate(ap(0:imax+1,0:jmax+1,0:kmax+1))
-#ifdef _CR
+#ifdef _CN
   allocate(ba(0:imax+1,0:jmax+1,0:kmax+1))
 #endif
   
@@ -55,7 +55,7 @@ program main
   write(6,"(a,i4)" ) "freq_write:",freq_write
   b2 = 0.0d0
 
-#ifdef _CR
+#ifdef _CN
   ! 1/2 factor is needed for Crank-Nicolson method
   coef1 = -0.5d0*dt/dx/dx*diff_coef
   coef2 = 1.0d0+6.0d0/2*dt/dx/dx*diff_coef
@@ -87,7 +87,7 @@ program main
   open(unit=unit_write,file="data_out",form="unformatted",access="stream")
   do tstep=1,tstep_max
      if (mod(tstep,tstep_max/10).eq.0) write(6,*) "tstep:",tstep
-#ifdef _CR
+#ifdef _CN
      ! A*anew = B*a
      ! calculate B*a
      do k=1,kmax
@@ -107,7 +107,7 @@ program main
      do k=0,kmax+1
         do j=0,jmax+1
            do i=0,imax+1
-#ifdef _CR
+#ifdef _CN
               x(i,j,k) = ba(i,j,k) ! initial guess
 #else
               x(i,j,k) = a(i,j,k) ! initial guess
@@ -142,7 +142,7 @@ program main
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
-#ifdef _CR
+#ifdef _CN
               r(i,j,k) = ba(i,j,k)-ax(i,j,k)
               b2       = b2 + ba(i,j,k)*ba(i,j,k)
 #else
@@ -283,7 +283,7 @@ program main
 #endif
 
   deallocate(a,anew,r,rnew,p,pnew,x,xnew,ax,ap)
-#ifdef _CR
+#ifdef _CN
   deallocate(ba)
 #endif
   
