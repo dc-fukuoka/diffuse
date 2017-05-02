@@ -9,7 +9,7 @@ program main
   integer::unit=10
   integer::len
   real(8),parameter::sigma=8.0d0
-  
+  real(8),parameter::pi=4*atan(1.0d0)
 
   read(11,param1)
   open(unit=unit,file="data_in",form="unformatted",access="stream")
@@ -22,7 +22,7 @@ program main
         do i=0,imax+1
            !  a(i,j,k) = i*10000+j*10+k
            !  a(i,j,k) = sin(dble(i))+cos(dble(j))+sin(dble(k))
-           a(i,j,k) = exp(-1.0d0*((i-imax/2)**2+(j-jmax/2)**2+(k-kmax/2)**2)/2/sigma/sigma)/sqrt(2*3.14159d0*sigma) ! exp(-r^2)
+           a(i,j,k) = exp(-1.0d0*((i-imax/2)**2+(j-jmax/2)**2+(k-kmax/2)**2)/2/sigma/sigma)/sqrt(2*pi)/sigma ! exp(-r^2)
         end do
      end do
   end do
