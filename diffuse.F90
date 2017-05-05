@@ -464,7 +464,7 @@ module mysubs
     ! Crank-Nicolson method:
     ! A*anew = B*a
     ! coef1*(anew(g+1)+anew(g-1)+anew(g+(imax+2))+anew(g-(imax+2))+anew(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef2*anew(g) = ba(g)
-    ! ba(g) = coef3*(a(g+1)+a(g-1)+a(g+(imax+2))+a(g-(imax+2))+a(g+(imax+2)*(jmax+2))+anew(g-(imax+2)*(jmax+2)))+coef4*a(g)
+    ! ba(g) = coef3*(a(g+1)+a(g-1)+a(g+(imax+2))+a(g-(imax+2))+a(g+(imax+2)*(jmax+2))+a(g-(imax+2)*(jmax+2)))+coef4*a(g)
 
     do tstep=1,tstep_max ! time step
        !$omp parallel private(i,j,k)
