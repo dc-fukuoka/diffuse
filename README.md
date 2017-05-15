@@ -56,7 +56,7 @@ compare the results between implicit method(CG method) and explict method
 
 compare the results between implicit method and explicit method.
 explicit method program is expl.F90.  
-the animation shows that how a gaussian ware decays at k = kmax/2
+the animation shows that how a gaussian wave decays at k = kmax/2
 # 1.
 
     dt        = 1.0d-6
