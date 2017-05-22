@@ -1,6 +1,3 @@
-! cannot find a good way to write multiple statements in fortran macro function...
-#define myassert(ret) if (ret.ne.0) write(6,'(2a,i0,a,i0)') __FILE__, ": ", __LINE__, ": ret: ", ret
-
 module params
   use mpi
   implicit none
