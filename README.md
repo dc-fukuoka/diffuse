@@ -66,7 +66,7 @@ the animation shows that how a gaussian wave decays at k = kmax/2
     tstep_max  = 100
     freq_write = 100
   
-stability condition of explicit method:  
+stability condition of explicit method(Courant condition):  
 3\*diff_coef\*dt/dx/dx <= 1/2  
 = 3.0  
 this is instable for explicit method.  
@@ -88,7 +88,7 @@ the result diverges due to the instability of explicit method...
     tstep_max  = 1000
     freq_write = 100
   
-stability condition of explicit method:  
+stability condition of explicit method(Courant condition):  
 3\*diff_coef\*dt/dx/dx <= 1/2  
 = 0.3  
 this is stable for explicit method.  
