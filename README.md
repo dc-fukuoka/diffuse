@@ -101,5 +101,5 @@ this is stable condition, in this case, explicit method converges.
 `$ eog gifs/diffuse.expl.2.gif`  
 ![Alt text](gifs/diffuse.expl.2.gif?raw=true "explicit method 2")
   
-note: diffusion speed is different between implicit method and explicit method, because implicit method case uses Crank-Nicolson method, that is time direction second orcer accuracy.  
-if Crank-Nicolson method is disabled, (remove -D_CN from the makefile) the diffusion speed will be almost the same.
+note: calculated diffusion speed is a little bit different between implicit method and explicit method, because implicit method case uses Crank-Nicolson method as well, that is time direction second orcer accuracy so implicit method case is more accurete.  
+if Crank-Nicolson method is disabled, (remove -D_CN from the makefile) the calculated diffusion speed will be almost the same.
