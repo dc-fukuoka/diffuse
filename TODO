@@ -1,3 +1,5 @@
 - implement hybrid OpenACC/MPI version.
 - implement hybrid CUDA/MPI version.
 - implement hybrid intel Xeon Phi offload/MPI version.
+
+- D -> 1/D, need to fix
