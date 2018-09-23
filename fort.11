@@ -5,13 +5,13 @@ tol       = 1.0d-40 ! convergence tolerance of CG method
 diff_coef = 1.0d2   ! diffusion coefficient
 /
 &param1
-imax = 128 ! global size for x direction
-jmax = 128 ! global size for y direction
-kmax = 128 ! global size for z direction
+imax = 64 ! global size for x direction
+jmax = 64 ! global size for y direction
+kmax = 64 ! global size for z direction
 /
 &param2
 idiv = 1 ! # of division for x direction
-jdiv = 2 ! # of division for y direction
+jdiv = 1 ! # of division for y direction
 kdiv = 2 ! # of division for z direction
 ! idiv*jdiv*kdiv must equal to total # of processes(np)
 ! imax/idiv, jmax/jdiv and kmax/kdiv must be an integer
