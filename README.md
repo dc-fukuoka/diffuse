@@ -42,19 +42,21 @@ how to run:
   
 performance comparison
 ===============	  
-cpu: Intel(R) Xeon(R) CPU E5-2450 0 @ 2.10GHz, 16 cores  
+cpu: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz, 28 cores  
 problem size: 128x128x128  
 tstep_max   : 100  
 freq_write  : 100  
   
-with 1  core            : 239.6 s
+with 1  core            : 253.9 s
 * 2 nodes:  
-with 32 cores(flat MPI) : 17.6 s(division:2x4x4)  
-with 32 cores(hybrid)   : 14.4 s(division:1x2x2)  
+with 32 cores(flat MPI) : 10.7 s(division:2x4x4)  
+with 32 cores(hybrid)   :  8.4 s(division:1x2x2)
+with 56 cores(hybrid)   :  5.9 s(division:1x2x2)  
   
 * 16 nodes:  
-with 256 cores(flat MPI) : 7.9 s(division:4x8x8)     
-with 256 cores(hybrid)   : 3.7 s(division:2x4x4)  
+with 256 cores(flat MPI) : 5.9 s(division:4x8x8)     
+with 256 cores(hybrid)   : 5.1 s(division:2x4x4)
+with 448 cores(hybrid)   : 1.9 s(division:2x4x4)  
 
 compare the results between implicit method(CG method) and explict method
 ===============	  

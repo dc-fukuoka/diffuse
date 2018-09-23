@@ -1,7 +1,7 @@
 fc       = gfortran
 mpifc    = mpif90
 fppflags = -fpp -D_OVERLAP_MPI
-fflags   = -g -O3 -mavx
+fflags   = -g -O3 -march=core-avx2
 openmp   = -fopenmp
 ldflags  =
 libs     =

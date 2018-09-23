@@ -1,6 +1,6 @@
 CC       = icc
 FC       = ifort
-CFLAGS   = -g -O3 -mavx
+CFLAGS   = -g -O3 -march=core-avx2
 CPPFLAGS = 
 FPPFLAGS = 
 LDFLAGS  = 
