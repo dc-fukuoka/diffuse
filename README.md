@@ -1,4 +1,4 @@
-*diffuse* - 3D diffusion equation solver by using finite difference method + CG method(no precondition) + Crank-Nicolson method with MPI.
+*diffuse* - 3D diffusion equation solver by using finite difference method + CG method(diagonal precondition) + Crank-Nicolson method with MPI.
 ===============	  
 the result was compared to serial version(cg.F90)  
   

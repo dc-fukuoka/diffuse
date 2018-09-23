@@ -494,10 +494,16 @@ module mysubs
        do k=1,kmax_l
           do j=1,jmax_l
              do i=1,imax_l
-                ba_l(i,j,k) = coef3*(a_l(i+1,j,  k  )+a_l(i-1,j,  k  )  &
+                ! left diagonal precondition
+                ! Aanew = Ba
+                ! P = diag(Anew)
+                ! P^{-1}Aanew = P^{-1}Ba
+                ! diag(P^{-1})= coef2
+                ! diag(B) = coef4
+                ba_l(i,j,k) = coef3/coef2*(a_l(i+1,j,  k  )+a_l(i-1,j,  k  )  &
                                     +a_l(i,  j+1,k  )+a_l(i,  j-1,k  )  &
                                     +a_l(i,  j,  k+1)+a_l(i,  j,  k-1)) &
-                              +coef4*a_l(i,  j,  k  )
+                              +coef4/coef2*a_l(i,  j,  k  )
              end do
           end do
        end do
@@ -516,7 +522,10 @@ module mysubs
 #ifdef _CN
                 x_l(i,j,k) = ba_l(i,j,k) ! initial guess
 #else
-                x_l(i,j,k) = a_l(i,j,k)  ! initial guess
+                ! left diagonal precondition
+                ! P^{-1}Aanew = P^{-1}a
+                ! rhs = P^{-1}a
+                x_l(i,j,k) = a_l(i,j,k)/coef2  ! initial guess
 #endif
              end do
           end do
@@ -531,17 +540,21 @@ module mysubs
           do j=1,jmax_l
              do i=1,imax_l
 #ifdef _CN
-                r_l(i,j,k) = ba_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
-                                                +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
-                                                +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
-                                          +coef2*x_l(i,  j,  k  ))
+                ! left diagonal precondition
+                r_l(i,j,k) = ba_l(i,j,k)-(coef1/coef2*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
+                                                      +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
+                                                      +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
+                                                      +x_l(i,  j,  k  ))
                 b2_l       = b2_l+ba_l(i,j,k)*ba_l(i,j,k)
 #else
-                r_l(i,j,k) = a_l(i,j,k)-(coef1*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
-                                               +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
-                                               +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
-                                         +coef2*x_l(i,  j,  k  ))
-                b2_l       = b2_l+a_l(i,j,k)*a_l(i,j,k)
+                ! left diagonal precondition
+                ! Aanew = a
+                ! P^{-1}Aanew = P^{-1}a
+                r_l(i,j,k) = a_l(i,j,k)/coef2-(coef1/coef2*(x_l(i+1,j,  k  )+x_l(i-1,j,  k  )  &
+                                                           +x_l(i,  j+1,k  )+x_l(i,  j-1,k  )  &
+                                                           +x_l(i,  j,  k+1)+x_l(i,  j,  k-1)) &
+                                                           +x_l(i,  j,  k  ))
+                b2_l       = b2_l+a_l(i,j,k)*a_l(i,j,k)/coef2**2
 #endif
                 p_l(i,j,k) = r_l(i,j,k)
              end do
@@ -585,10 +598,11 @@ module mysubs
              do j=1,jmax_l
                 do i=1,imax_l
                    r2_l  = r2_l+r_l(i,j,k)*r_l(i,j,k)
-                   pap_l = pap_l+p_l(i,j,k)*(coef1*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
-                                                   +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
-                                                   +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
-                                             +coef2*p_l(i,  j,  k  ))
+                   ! left diagonal precondition
+                   pap_l = pap_l+p_l(i,j,k)*(coef1/coef2*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
+                                                         +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
+                                                         +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
+                                                         +p_l(i,  j,  k  ))
                 end do
              end do
           end do
@@ -612,10 +626,11 @@ module mysubs
              do j=1,jmax_l
                 do i=1,imax_l
                    xnew_l(i,j,k) = x_l(i,j,k)+alpha*p_l(i,j,k)
-                   rnew_l(i,j,k) = r_l(i,j,k)-alpha*(coef1*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
-                                                           +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
-                                                           +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
-                                                     +coef2*p_l(i,  j,  k  ))
+                   ! left diagonal precondition
+                   rnew_l(i,j,k) = r_l(i,j,k)-alpha*(coef1/coef2*(p_l(i+1,j,  k  )+p_l(i-1,j,  k  )  &
+                                                                 +p_l(i,  j+1,k  )+p_l(i,  j-1,k  )  &
+                                                                 +p_l(i,  j,  k+1)+p_l(i,  j,  k-1)) &
+                                                                 +p_l(i,  j,  k  ))
                    rnew2_l       = rnew2_l+rnew_l(i,j,k)*rnew_l(i,j,k)
                 end do
              end do

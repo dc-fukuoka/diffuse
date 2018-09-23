@@ -92,10 +92,16 @@ program main
      do k=1,kmax
         do j=1,jmax
            do i=1,imax
-              ba(i,j,k) = coef3*(a(i+1,j,  k  )+a(i-1,j,  k  )  &
-                                +a(i,  j+1,k  )+a(i,  j-1,k  )  &
-                                +a(i,  j,  k+1)+a(i,  j,  k-1)) &
-                          +coef4*a(i,  j,  k  )
+              ! left diagonal precondition
+              ! Aanew = Ba
+              ! P = diag(Anew)
+              ! P^{-1}Aanew = P^{-1}Ba
+              ! diag(P^{-1})= coef2
+              ! diag(B) = coef4
+              ba(i,j,k) = coef3/coef2*(a(i+1,j,  k  )+a(i-1,j,  k  )  &
+                                      +a(i,  j+1,k  )+a(i,  j-1,k  )  &
+                                      +a(i,  j,  k+1)+a(i,  j,  k-1)) &
+                          +coef4/coef2*a(i,  j,  k  )
            end do
         end do
      end do
@@ -109,7 +115,10 @@ program main
 #ifdef _CN
               x(i,j,k) = ba(i,j,k) ! initial guess
 #else
-              x(i,j,k) = a(i,j,k) ! initial guess
+              ! left diagonal precondition
+              ! P^{-1}Aanew = P^{-1}a
+              ! rhs = P^{-1}a
+              x(i,j,k) = a(i,j,k)/coef2 ! initial guess
 #endif
            end do
         end do
@@ -130,17 +139,21 @@ program main
         do j=1,jmax
            do i=1,imax
 #ifdef _CN
-              r(i,j,k) = ba(i,j,k)-(coef1*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
-                                          +x(i,  j+1,k  )+x(i,  j-1,k  )  &
-                                          +x(i,  j,  k+1)+x(i,  j,  k-1)) &
-                                    +coef2*x(i,  j,  k  ))
+              ! left diagonal precondition
+              r(i,j,k) = ba(i,j,k)-(coef1/coef2*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
+                                                +x(i,  j+1,k  )+x(i,  j-1,k  )  &
+                                                +x(i,  j,  k+1)+x(i,  j,  k-1)) &
+                                                +x(i,  j,  k  ))
               b2       = b2 + ba(i,j,k)*ba(i,j,k)
 #else
-              r(i,j,k) = a(i,j,k)-(coef1*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
-                                         +x(i,  j+1,k  )+x(i,  j-1,k  )  &
-                                         +x(i,  j,  k+1)+x(i,  j,  k-1)) &
-                                   +coef2*x(i,  j,  k  ))
-              b2       = b2 + a(i,j,k)*a(i,j,k)
+              ! left diagonal precondition
+              ! Aanew = a
+              ! P^{-1}Aanew = P^{-1}a
+              r(i,j,k) = a(i,j,k)/coef2-(coef1/coef2*(x(i+1,j,  k  )+x(i-1,j,  k  )  &
+                                                     +x(i,  j+1,k  )+x(i,  j-1,k  )  &
+                                                     +x(i,  j,  k+1)+x(i,  j,  k-1)) &
+                                                     +x(i,  j,  k  ))
+              b2       = b2 + a(i,j,k)*a(i,j,k)/coef2**2
 #endif
               p(i,j,k) = r(i,j,k)
            end do
@@ -164,10 +177,11 @@ program main
         do k=1,kmax
            do j=1,jmax
               do i=1,imax
-                 ap(i,j,k) = coef1*(p(i+1,j,  k  )+p(i-1,j,  k  )  &
-                                   +p(i,  j+1,k  )+p(i,  j-1,k  )  &
-                                   +p(i,  j,  k+1)+p(i,  j,  k-1)) &
-                             +coef2*p(i,  j,  k  )
+                 ! left diagonal precondition
+                 ap(i,j,k) = coef1/coef2*(p(i+1,j,  k  )+p(i-1,j,  k  )  &
+                                         +p(i,  j+1,k  )+p(i,  j-1,k  )  &
+                                         +p(i,  j,  k+1)+p(i,  j,  k-1)) &
+                                         +p(i,  j,  k  )
               end do
            end do
         end do
