@@ -501,8 +501,8 @@ module mysubs
                 ! diag(P^{-1})= coef2
                 ! diag(B) = coef4
                 ba_l(i,j,k) = coef3/coef2*(a_l(i+1,j,  k  )+a_l(i-1,j,  k  )  &
-                                    +a_l(i,  j+1,k  )+a_l(i,  j-1,k  )  &
-                                    +a_l(i,  j,  k+1)+a_l(i,  j,  k-1)) &
+                                          +a_l(i,  j+1,k  )+a_l(i,  j-1,k  )  &
+                                          +a_l(i,  j,  k+1)+a_l(i,  j,  k-1)) &
                               +coef4/coef2*a_l(i,  j,  k  )
              end do
           end do
